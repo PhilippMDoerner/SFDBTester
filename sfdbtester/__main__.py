@@ -50,7 +50,7 @@ def main(args):
 	if args.write:
 		no_dupl_sfdb_file = args.SFDBFile[:-5] + '_no_duplicates.sfdb'
 		logger.info('Writing SFDB file without duplicates to {no_dupl_sfdb_file}')
-		sfdb_new.write(no_dupl_sfdb_file, sorted=args.sorted)
+		sfdb_new.write(no_dupl_sfdb_file, sort=args.sorted)
 
 	# Finish logging
 	logger.info('Done')

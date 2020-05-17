@@ -36,8 +36,6 @@ class SFDBContainer:
         elif isinstance(key, int):  # If they key is an index
             if key >= len(self):
                 raise IndexError(f'Index {key} is out of range of 0-{len(self)-1}')
-            if key < type(self).i_header_end:  # If the key is an index for the header
-                return self.sfdb_lines[key].split('\t')
 
             return self.content[key]
         else:
@@ -84,11 +82,11 @@ class SFDBContainer:
 
     @classmethod
     def from_file(cls, sfdb_file_path):
-        sfdb_lines = cls.read_sfdb(sfdb_file_path)
+        sfdb_lines = cls.read_sfdb_from_file(sfdb_file_path)
         return cls(sfdb_lines)
 
     @staticmethod
-    def read_sfdb(file_path):
+    def read_sfdb_from_file(file_path):
         """Reads in an sfdb file and turns it into a list of lists of strings.
 
         Parameters:
@@ -97,18 +95,25 @@ class SFDBContainer:
             list: List of strings. Each string is a single line in the sfdb file
             None: If file_path is empty
         """
-        if not file_path:
-            raise ValueError(f'{file_path} is not a valid file path!')
-
         with open(file_path, encoding="utf8") as f:
-            line_list = f.readlines()
-
-        line_list = [line.rstrip() for line in line_list]
+            line_list = SFDBContainer._read_sfdb(f)
 
         if not SFDBContainer._is_sfdb(line_list):
             raise NotSFDBFileError(f'{file_path} is not an SFDB! It does not have a correct sfdb header!')
 
         return line_list
+
+    @staticmethod
+    def _read_sfdb(sfdb_stream):
+        """Reads in an sfdb file and turns it into a list of lists of strings without line-endings.
+
+        Parameters:
+            sfdb_stream (IOStream): An input output stream from which can be read.
+        Returns:
+            list: List of strings. Each string is a single line in the sfdb file
+            None: If file_path is empty
+        """
+        return [line.rstrip() for line in sfdb_stream.readlines()]
 
     @staticmethod
     def _is_sfdb(line_list):
@@ -138,18 +143,24 @@ class SFDBContainer:
         """Checks whether the sfdb file has a functional SQL Table Schema in its SQLTableSchema object"""
         return self.schema.is_full_schema()
 
-    def write(self, filepath, no_duplicates=False, sort=False):
-        """"Writes the sfdb to a file. Record can be sorted and have duplicates filtered out"""
+    def write_to_file(self, filepath, remove_duplicates=False, sort=False):
+        """"Creates an IOStream to a file and writes this sfdb to it. Records in written file can be sorted and have
+        duplicates filtered out."""
         with open(filepath, mode='w', encoding='utf-8') as f:
-            for line in self.header:
-                f.write(self._seq_to_sfdb_line(line) + '\n')
+            self._write(f, remove_duplicates=remove_duplicates, sort=sort)
 
-            i_duplicates = self._get_duplicate_indices_for_content()
-            content = np.sort(self.content, axis=0) if sort else self.content
-            for i, line in enumerate(content):
-                if no_duplicates and i in i_duplicates:
-                    continue
-                f.write(self._seq_to_sfdb_line(line) + '\n')
+    def _write(self, output_stream, remove_duplicates=False, sort=False):
+        """"Writes the sfdb to an IOStream. Records in written file can be sorted and have duplicates filtered out"""
+        for line in self.header:
+            output_stream.write(self._seq_to_sfdb_line(line) + '\n')
+
+        i_duplicates = self._get_duplicate_index_list()
+        content = np.sort(self.content, axis=0) if sort else self.content
+
+        for i, line in enumerate(content):
+            if remove_duplicates and i in i_duplicates:
+                continue
+            output_stream.write(self._seq_to_sfdb_line(line) + '\n')
 
     def _get_duplicate_index_list(self):
         """Return a list of the indices all duplicate entries. Does not include the first occurrence of each entry."""
