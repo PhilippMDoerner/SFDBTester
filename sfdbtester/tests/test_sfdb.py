@@ -10,7 +10,7 @@ def create_test_sfdbcontainer(name='Test', columns=('COLUMN1', 'COLUMN2'),
     """Creates an SFDBContainer object for testing"""
     columns = '\t'.join(columns)
     entries = ['\t'.join(entry) for entry in entries]
-    header = ['ENCODING\tUTF8',
+    header = ['ENCODING UTF8',
               'INIT',
               f'TABLE\t{name}',
               f'COLUMNS\t{columns}',
@@ -58,38 +58,62 @@ class TestSFDBContainer(ut.TestCase):
         with self.assertRaises(TypeError):
             entry = test_sfdb[i_test]
 
-    def test___get_item__slice(self): #TODO Get this test to work and test all slice-cases
-        test_sfdb = create_test_sfdbcontainer()
-        expected_output = np.array(['val1', 'val2'])
+    def test___get_item__slice(self):
+        test_entries = [['1', '2'], ['3', '4'], ['5', '6']]
+        test_sfdb = create_test_sfdbcontainer(entries=test_entries)
+
+        expected_output = np.array([['1', '2']])
         np.testing.assert_array_equal(expected_output, test_sfdb[:1])
 
-        expected_output = np.array(['val3', 'val4'])
-        np.testing.assert_array_equal(expected_output, test_sfdb[1:])
+        expected_output = np.array([['1', '2'], ['3', '4']])
+        np.testing.assert_array_equal(expected_output, test_sfdb[0:2])
 
-    #TODO: Test __reversed__
-    #TODO: Test __add__
-    #TODO: Test __radd__
+        expected_output = np.array([['1', '2'], ['3', '4'], ['5', '6']])
+        np.testing.assert_array_equal(expected_output, test_sfdb[0:])
+
+    def test___add__(self):
+        test_sfdb = create_test_sfdbcontainer()
+
+        added_sfdb = test_sfdb + test_sfdb
+
+        self.assertEqual(test_sfdb.header, added_sfdb.header)
+
+        expected_output = np.array([('val1', 'val2'), ('val3', 'val4'), ('val1', 'val2'), ('val3', 'val4')])
+        np.testing.assert_array_equal(expected_output, added_sfdb.content)
+
+    def test___add__wrong_object(self):
+        test_sfdb = create_test_sfdbcontainer()
+
+        with self.assertRaises(ValueError):
+            test_sfdb + 'I am an invalid partner for sfdb addition'
+
+    def test___add__wrong_header(self):
+        test_sfdb1 = create_test_sfdbcontainer()
+        test_sfdb2 = create_test_sfdbcontainer(name='SFI_DIFFERENT')
+
+        with self.assertRaises(ValueError):
+            test_sfdb1 + test_sfdb2
 
     def test_header(self):
         test_sfdb = create_test_sfdbcontainer()
 
-        self.assertEqual(test_sfdb.header[0], ['ENCODING UTF8'])
-        self.assertEqual(test_sfdb.header[1], ['INIT'])
-        self.assertEqual(test_sfdb.header[2], ['TABLE', 'Test'])
-        self.assertEqual(test_sfdb.header[3], ['COLUMNS', 'COLUMN1', 'COLUMN2'])
-        self.assertEqual(test_sfdb.header[4], ['INSERT'])
+        self.assertEqual(['ENCODING UTF8'], test_sfdb.header[0])
+        self.assertEqual(['INIT'], test_sfdb.header[1])
+        self.assertEqual(['TABLE', 'Test'], test_sfdb.header[2])
+        self.assertEqual(['COLUMNS', 'COLUMN1', 'COLUMN2'], test_sfdb.header[3])
+        self.assertEqual(['INSERT'], test_sfdb.header[4])
 
     def test_name(self):
         test_name = 'SFI_TESTTABLE'
         test_sfdb = create_test_sfdbcontainer(name=test_name)
 
-        self.assertEqual(test_sfdb.name, test_name)
+        self.assertEqual(test_name, test_sfdb.name)
 
     def test_columns(self):
         test_columns = ['C', 'D']
         test_sfdb = create_test_sfdbcontainer(columns=test_columns)
 
-        self.assertEqual(test_sfdb.columns, test_columns)
+        self.assertEqual(test_columns, test_sfdb.columns)
 
     def test_read_sfdb_from_file_wrong_file_path(self):
         with self.assertRaises(FileNotFoundError):
@@ -117,7 +141,7 @@ class TestSFDBContainer(ut.TestCase):
                           'TABLE	SFI_TESTTABLE',
                           'COLUMNS	COLUMN1	COLUMN2	COLUMN3',
                           'INSERT']
-        self.assertEqual(read_sfdb_lines, expected_lines)
+        self.assertEqual(expected_lines, read_sfdb_lines)
 
     def test_read_sfdb_from_file_single_entry(self):
         test_sfdb_filepath = get_resource_filepath('single_entry.sfdb')
@@ -130,7 +154,7 @@ class TestSFDBContainer(ut.TestCase):
                           'COLUMNS	COLUMN1	COLUMN2	COLUMN3',
                           'INSERT',
                           'val1	val2	val3']
-        self.assertEqual(read_sfdb_lines, expected_lines)
+        self.assertEqual(expected_lines, read_sfdb_lines)
 
     def test_write_to_file_invalid_filepath(self):
         test_sfdb = create_test_sfdbcontainer()
@@ -153,7 +177,7 @@ class TestSFDBContainer(ut.TestCase):
                            'INSERT\n',
                            'val1	val2\n',
                            'val3	val4\n']
-        self.assertEqual(output, expected_output)
+        self.assertEqual(expected_output, output)
 
     def test_write_to_file_no_duplicates(self):
         test_output_filepath = get_resource_filepath('tempfile.sfdb')
@@ -171,7 +195,7 @@ class TestSFDBContainer(ut.TestCase):
                            'INSERT\n',
                            'val1	val2\n',
                            'val3	val4\n']
-        self.assertEqual(output, expected_output)
+        self.assertEqual(expected_output, output)
 
     def test_write_with_duplicates(self):
         test_output_filepath = get_resource_filepath('tempfile.sfdb')
@@ -190,7 +214,7 @@ class TestSFDBContainer(ut.TestCase):
                            '1	2\n',
                            '3	4\n']
 
-        self.assertEqual(output, expected_output)
+        self.assertEqual(expected_output, output)
 
     def test_write_with_duplicates_with_sorting(self):
         test_output_filepath = get_resource_filepath('tempfile.sfdb')
@@ -209,7 +233,7 @@ class TestSFDBContainer(ut.TestCase):
                            '1	2\n',
                            '3	4\n']
 
-        self.assertEqual(output, expected_output)
+        self.assertEqual(expected_output, output)
 
     def test_write_without_duplicates_with_sorting(self):
         test_output_filepath = get_resource_filepath('tempfile.sfdb')
@@ -229,16 +253,20 @@ class TestSFDBContainer(ut.TestCase):
                            '3	4\n',
                            '5	6\n']
 
-        self.assertEqual(output, expected_output)
-
+        self.assertEqual(expected_output, output)
 
     def test_get_duplicates(self):
-        test_entries = [['1', '2'], ['1', '2'], ['5', '6'], ['3', '4']]
+        test_entries = [('1', '2'), ('3', '4'), ('1', '2'), ('5', '6'), ('1', '2'), ('5', '6')]
         test_sfdb = create_test_sfdbcontainer(entries=test_entries)
 
-        duplicate_list = test_sfdb.get_duplicates()
-        expected_duplicates = [np.array([0, 1])]
-        np.testing.assert_array_equal(duplicate_list, expected_duplicates)
+        output = test_sfdb.get_duplicates()
+
+        expected_output = [(np.array((0, 2, 4)), np.array(('1', '2'))),
+                           (np.array((3, 5)), np.array(('5', '6')))]
+        np.testing.assert_array_equal(expected_output[0][0], output[0][0])
+        np.testing.assert_array_equal(expected_output[0][1], output[0][1])
+        np.testing.assert_array_equal(expected_output[1][0], output[1][0])
+        np.testing.assert_array_equal(expected_output[1][1], output[1][1])
 
 
 if __name__ == '__main__':

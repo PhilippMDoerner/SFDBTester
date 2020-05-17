@@ -1,6 +1,9 @@
-from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
+"""This defines an sfdb object as SFDBContainer and stores it as numpy arrays for quick access and comparison.
+Can read and write SFDB files as well"""
 from functools import lru_cache
+import os
 import numpy as np
+from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
 class NotSFDBFileError(Exception):
@@ -47,7 +50,7 @@ class SFDBContainer:
         return self.content[::-1]
 
     def __add__(self, other_sfdb):
-        if self.header == other_sfdb.header:
+        if self._is_sfdb(other_sfdb) and self.header == other_sfdb.header:
             added_content_lines = other_sfdb.sfdb_lines[type(self).i_header_end:]
             return SFDBContainer(other_sfdb.sfdb_lines + added_content_lines)
         else:
@@ -95,11 +98,14 @@ class SFDBContainer:
             list: List of strings. Each string is a single line in the sfdb file
             None: If file_path is empty
         """
-        with open(file_path, encoding="utf8") as f:
-            line_list = SFDBContainer._read_sfdb(f)
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f'{file_path} does not exist !')
+
+        with open(file_path, encoding="utf8") as input_stream:
+            line_list = SFDBContainer._read_sfdb(input_stream)
 
         if not SFDBContainer._is_sfdb(line_list):
-            raise NotSFDBFileError(f'{file_path} is not an SFDB! It does not have a correct sfdb header!')
+            raise NotSFDBFileError(f'{file_path} is not an SFDB! It does not have a correct sfdb header or no entries!')
 
         return line_list
 
@@ -116,28 +122,33 @@ class SFDBContainer:
         return [line.rstrip() for line in sfdb_stream.readlines()]
 
     @staticmethod
-    def _is_sfdb(line_list):
-        has_min_length = (len(line_list) >= 5)
-        has_sfdb_header = SFDBContainer._has_sfdb_header(line_list)
-        return has_min_length and has_sfdb_header
+    def _is_sfdb(sfdb_object):
+        if isinstance(sfdb_object, list):
+            sfdb_line_list = sfdb_object
+            has_min_length = (len(sfdb_line_list) >= 5)
+            has_sfdb_header = SFDBContainer._has_sfdb_header(sfdb_line_list)
+            return has_min_length and has_sfdb_header
+
+        return isinstance(sfdb_object, SFDBContainer)
 
     @staticmethod
     def _has_sfdb_header(line_list):
         """Checks whether each line in the header of an sfdb file follows the sfdb format specifications."""
-        if len(line_list) < 5: return False
+        if len(line_list) < 5:
+            return False
 
         header = [line.split('\t') for line in line_list[:5]]
         is_correct_header = ((header[0][0] == 'ENCODING UTF8') and (len(header[0]) == 1) and
                              (header[1][0] == 'INIT')          and (len(header[1]) == 1) and
                              (header[2][0] == 'TABLE')         and (len(header[2]) == 2) and
-                             (header[3][0] == 'COLUMNS')       and (len(header[3]) >  1) and
+                             (header[3][0] == 'COLUMNS')       and (len(header[3]) > 1) and
                              (header[4][0] == 'INSERT')        and (len(header[4]) == 1))
         return is_correct_header
 
     @staticmethod
-    def _seq_to_sfdb_line(ar):
-        """Turns a list into a more easily human readable string"""
-        return '\t'.join(ar)
+    def _seq_to_sfdb_line(sfdb_sequence):
+        """Turns a list or arrayinto a more easily human readable string"""
+        return '\t'.join(sfdb_sequence)
 
     def has_schema(self):
         """Checks whether the sfdb file has a functional SQL Table Schema in its SQLTableSchema object"""
@@ -146,8 +157,8 @@ class SFDBContainer:
     def write_to_file(self, filepath, remove_duplicates=False, sort=False):
         """"Creates an IOStream to a file and writes this sfdb to it. Records in written file can be sorted and have
         duplicates filtered out."""
-        with open(filepath, mode='w', encoding='utf-8') as f:
-            self._write(f, remove_duplicates=remove_duplicates, sort=sort)
+        with open(filepath, mode='w', encoding='utf-8') as output_stream:
+            self._write(output_stream, remove_duplicates=remove_duplicates, sort=sort)
 
     def _write(self, output_stream, remove_duplicates=False, sort=False):
         """"Writes the sfdb to an IOStream. Records in written file can be sorted and have duplicates filtered out"""
@@ -167,7 +178,6 @@ class SFDBContainer:
         duplicate_list = self.get_duplicates()
         i_duplicates = []
         for indices, line in duplicate_list:
-            indices = [i - self.i_header_end for i in indices]
             i_duplicates.extend(indices[1:])
         return set(i_duplicates)
 
@@ -184,6 +194,6 @@ class SFDBContainer:
         _, inverse_rows = np.unique(rows, return_index=True)
 
         res = np.split(cols, inverse_rows[1:])
-        duplicate_list = [(i + type(self).i_header_end, self.content[i[0]]) for i in res]
+        duplicate_list = [(i, self.content[i[0]]) for i in res]
 
         return duplicate_list
