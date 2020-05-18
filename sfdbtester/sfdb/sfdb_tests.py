@@ -2,10 +2,68 @@ import re
 import logging
 from sfdbtester.common import userinput as ui
 import numpy as np
+from sfdbtester.sfdb.sfdb import SFDBContainer
 
+MAX_DIGITS = 10
+
+#TODO: Separate checking and logging of all tests
+#TODO: Throw all checks together in a single big test
 
 class ComparisonError(Exception):
     pass
+
+
+def log_sfdb_header_check(has_valid_header):
+    """Tests the format of an SFDB file's header
+    Parameters:
+        sfdb (SFDBContainer): The SFDB file.
+    Returns:
+        int: The number of all lines that raised warnings.
+    """
+    logger = logging.getLogger('main')
+
+    if not has_valid_header:
+        logger.info('    !HEADER FORMAT WARNING! There is a format error within the first 5 lines of the SFDB')
+
+
+def log_sfdb_content_format_check(column_count, faulty_lines):
+    logger = logging.getLogger('main')
+
+    if len(faulty_lines) == 0:
+        logger.info('    No issues.')
+        return
+
+    logger.info(f'Required number of values: {column_count:>{MAX_DIGITS}}\n'
+                f'           Line | # Values')
+    for i, line in faulty_lines:
+        logger.info(f'     {i+1:<{MAX_DIGITS+4}} | {len(line):>{MAX_DIGITS}}')
+
+
+def log_excel_autoformatting_check(formatted_cells_list):#TODO: Have the output explicitly show the value with the issue
+    logger = logging.getLogger('main')
+
+    if len(formatted_cells_list) == 0:
+        logger.info('    No issues.')
+        return
+
+    faulty_lines_table_header = '      '+(' '*MAX_DIGITS)+'Line | Entry'
+    logger.info(faulty_lines_table_header)
+    for i_row, i_col, line in formatted_cells_list:
+        line_string = _list_to_string(line)
+        logger.info(f'      {i_row + 1:>{MAX_DIGITS+4}} | {line_string}')
+
+
+def log_duplicates_check(duplicates_list):
+    logger = logging.getLogger('main')
+
+    if len(duplicates_list) == 0:
+        logger.info('    No issues.')
+        return
+
+    logger.info(f'    First Occurrence | Duplicate Indices')
+    for indices, line in duplicates_list:
+        logger.info(f'    {indices[0]:>{MAX_DIGITS+6}} | {_list_to_string(indices[1:])}\n'
+                    f'    Entry: \'{_list_to_string(line)}\'')
 
 
 def test_sfdb_format(sfdb):
@@ -24,31 +82,44 @@ def test_sfdb_format(sfdb):
     logger = logging.getLogger('main')
     warning_counter = 0
 
-    is_correct_header = check_header_format(sfdb)
-    if not is_correct_header:
-        logger.info('\t!HEADER FORMAT WARNING! There is a format error within the first 6 lines of the SFDB')
-        warning_counter += 1
+    logger.info('STARTING HEADER TEST')
+    has_valid_header = check_header_format(sfdb)
+    log_sfdb_header_check(has_valid_header)
+    warning_counter += 1 if has_valid_header else 0
+    logger.info('FINISHED HEADER TEST\n')
 
+    logger.info('STARTING CONTENT FORMAT TEST')
     wrong_content_lines = check_content_format(sfdb)
-    for i, line in wrong_content_lines:
-        logger.info(f'\t!CONTENT FORMAT WARNING! Line {i+1} has {len(line)} values instead of {len(sfdb.columns)}')
+    log_sfdb_content_format_check(len(sfdb.columns), wrong_content_lines)
     warning_counter += len(wrong_content_lines)
+    logger.info('FINISHED CONTENT FORMAT TEST\n')
 
+    logger.info('STARTING EXCEL AUTOFORMATTING TEST')
     formatted_cells_list = check_excel_autoformatting(sfdb)
-    for i_row, i_col, line in formatted_cells_list:
-        line_string = _list_to_string(line)
-        logger.info(f'\t!EXCEL FORMATTING WARNING! Line {i_row + 1:<10} Column {i_col + 1:<3} : '
-                    f'\'\n\t{line_string}')
+    log_excel_autoformatting_check(formatted_cells_list)
     warning_counter += len(formatted_cells_list)
+    logger.info('FINISHED EXCEL AUTOFORMATTING TEST\n')
 
+    logger.info('STARTING DUPLICATE TEST')
     duplicates = sfdb.get_duplicates()
-    for indices, line in duplicates:
-        logger.info(f'\t!DUPLICATE WARNING! Line {indices[0]:<10} has duplicates:'
-                    f'\n\t\t\tIndices: {_list_to_string(indices[1:])}'
-                    f'\n\t\t\tLine:    {_list_to_string(line)}')
-        warning_counter += len(indices) - 1
+    log_duplicates_check(duplicates)
+    warning_counter += len(sfdb._get_duplicate_index_list())
+    logger.info('FINISHED DUPLICATE TEST\n')
 
     return warning_counter
+
+
+def log_regex_check(non_regex_lines, regex_pattern):#TODO: Hier muss noch explizit am Format gefeilt werden
+    logger = logging.getLogger('main')
+
+    if len(non_regex_lines) == 0:
+        logger.info('    No issues.')
+        return
+
+    logger.info(f'    Regex: \"{str(regex_pattern)[12:-2]}\":')
+    logger.info(f'          Line | Entry')
+    for i, line in non_regex_lines:
+        logger.info(f'        {i + 1:>{MAX_DIGITS}} | {_list_to_string(line)}')
 
 
 def test_sfdb_against_regex(sfdb, regex_pattern):
@@ -65,15 +136,12 @@ def test_sfdb_against_regex(sfdb, regex_pattern):
             expression.
     """
     logger = logging.getLogger('main')
-    warning_counter = 0
 
+    logger.info('STARTING REGEX TEST')
     non_regex_lines = check_content_against_regex(sfdb, regex_pattern)
-    if non_regex_lines:
-        logger.info(f'\tThe following lines do not contain the regular expression \"{str(regex_pattern)[12:-2]}\":')
-        for i, line in non_regex_lines:
-            logger.info(f'\t\t{i+1:<10}: {_list_to_string(line)}')
-
-        warning_counter += len(non_regex_lines)
+    log_regex_check(non_regex_lines, regex_pattern)
+    warning_counter = len(non_regex_lines)
+    logger.info('FINISHED REGEX TEST')
 
     return warning_counter
 

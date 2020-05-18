@@ -1,12 +1,12 @@
-from sfdbtester.sfdb import sfdb_tests as st
 import logging
-from sfdbtester.sfdb.sfdb import SFDBContainer
 from datetime import datetime
 from sfdbtester.common.argparser import get_args
+from sfdbtester.sfdb.sfdb import SFDBContainer
+from sfdbtester.sfdb import sfdb_tests as st
 
 
 def create_main_logger(log_filepath):
-	LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
+	LOG_FORMAT = "%(levelname)s - %(message)s"
 	handler = logging.FileHandler(log_filepath, 'w', 'utf-8')
 	logging.basicConfig(level=logging.DEBUG,
 						format=LOG_FORMAT,
@@ -28,9 +28,7 @@ def main(args):
 	sfdb_new = SFDBContainer.from_file(args.SFDBFile)
 
 	# Perform Tests on SFDB file
-	logger.info('START FORMAT TEST')
 	warning_counter += st.test_sfdb_format(sfdb_new)
-	logger.info('FINISHED FORMAT TEST')
 
 	logger.info('START DATATYPE TEST')
 	warning_counter += st.test_sfdb_datatypes(sfdb_new)

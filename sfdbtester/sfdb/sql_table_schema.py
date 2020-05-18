@@ -7,27 +7,32 @@ class ColumnError(Exception):
 
 
 class SQLTableSchema:
+    """Part of an SFDB object. Defines the datatypes of the individual columns of an sfdb and the associated conditions
+    entries need to fulfill. Datatypes are SQL datatypes."""
     def __init__(self, sql_table_name):
         self.table_name = sql_table_name
-        self.table_schema = self._get_table_schema()
+        self.column_properties = self._get_column_properties()
 
     @property
     def columns(self):
         """Returns a list of all columns in this sql_table_scheme"""
-        return list(self.table_schema.keys())
+        return list(self.column_properties.keys())
+
+    @columns.setter
+    def columns(self, column_object_list):
+        self.column_properties = column_object_list
 
     def __len__(self):
         """Return number of columns defined by the schema"""
-        return len(self.table_schema)
+        return len(self.column_properties)
 
     def __getitem__(self, column):
         """Return a column defined by the schema"""
         if column not in self.columns:
-            raise ColumnError(f'Column {column} is not part of the SFDB table\'s '
-                              f'columns : {self.columns}')
-        return self.table_schema[column]
+            raise ColumnError(f'Column {column} does not exist in table {self.table_name}!')
+        return self.column_properties[column]
 
-    def _get_table_schema(self):
+    def _get_column_properties(self):
         """Retrieves the SQL column definitions for the SFDB file based on user
         input if available.
 
@@ -42,7 +47,7 @@ class SQLTableSchema:
 
     def is_full_schema(self):
         """Checks whether the schema actually defines any columns"""
-        return self.table_schema is not None
+        return self.column_properties is not None
 
     def get_datatype_regex_pattern(self, column_name):
         """Generates a Pattern object of a regular expression that can match any
@@ -61,8 +66,8 @@ class SQLTableSchema:
         if column_name not in self.columns:
             raise ValueError('Column not in SQL table schema.')
 
-        datatype = self.table_schema[column_name].datatype.lower()
-        length = self.table_schema[column_name].length
+        datatype = self.column_properties[column_name].datatype.lower()
+        length = self.column_properties[column_name].length
         regex_string = None
         if datatype == 'nvarchar':
             regex_string = '.{0,' + str(length) + '}'

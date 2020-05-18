@@ -119,7 +119,12 @@ class SFDBContainer:
             list: List of strings. Each string is a single line in the sfdb file
             None: If file_path is empty
         """
-        return [line.rstrip() for line in sfdb_stream.readlines()]
+        sfdb_lines = [line.rstrip() for line in sfdb_stream.readlines()]
+
+        if sfdb_lines[-1] == '':
+            del(sfdb_lines[-1])
+
+        return sfdb_lines
 
     @staticmethod
     def _is_sfdb(sfdb_object):

@@ -1,12 +1,11 @@
 import unittest as ut
+from pathlib import Path
 import numpy as np
 from sfdbtester.sfdb.sfdb import SFDBContainer, NotSFDBFileError
-from pathlib import Path
 
 
 def create_test_sfdbcontainer(name='Test', columns=('COLUMN1', 'COLUMN2'),
-                              entries=(('val1', 'val2'),
-                                       ('val3', 'val4'))):
+                              entries=(('val1', 'val2'), ('val3', 'val4'))):
     """Creates an SFDBContainer object for testing"""
     columns = '\t'.join(columns)
     entries = ['\t'.join(entry) for entry in entries]

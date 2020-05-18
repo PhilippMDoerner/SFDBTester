@@ -1,27 +1,36 @@
 import unittest as ut
 from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
+from sfdbtester.sfdb.sql_table_schema import Column
+
+
+def create_test_sqltableschema(column_names=('1', '2'), schema_name='TEST_SCHEMA',
+                               column_properties=(Column('nvarchar', 8, True), Column('int', 4, True))):
+    schema = SQLTableSchema(schema_name)
+    schema.columns = {name: properties for name, properties in zip (column_names, column_properties)}
+    return schema
 
 
 class TestSQLTableSchema(ut.TestCase):
     def setUp(self):
         self.test_schema = SQLTableSchema('TEST_SCHEMA')
 
-    def test_columns(self):
-        expected_columns = ['COLUMN1', 'COLUMN2', 'COLUMN3', 'COLUMN4',
-                            'COLUMN5', 'COLUMN6', 'COLUMN7', 'COLUMN8']
+    def test_columns_valid_columns(self): #TODO: Get this running
+        expected_columns = ['COLUMN1', 'COLUMN2']
         self.assertEqual(expected_columns, self.test_schema.columns)
 
         wrong_columns = ['COLUMN1', 'COLUMN2', 'COLUMN3', 'COLUMN4',
                          'COLUMN5', 'COLUMN6', 'COLUMN7', 'COLUMN9']
         self.assertNotEqual(wrong_columns, self.test_schema.columns)
 
-    def test_is_full_schema(self):
-        self.assertTrue(self.test_schema.is_full_schema())
+    def test_is_full_schema_known_sfdb(self):
+        test_schema = SQLTableSchema('SFI_CURRENCY_SYMBOL')
+        self.assertTrue(test_schema.is_full_schema())
 
-        wrong_schema = SQLTableSchema('Schema is not in KNOWN_SFDB_FILES')
-        self.assertFalse(wrong_schema.is_full_schema())
+    def test_is_full_schema_unknown_sfdb(self):
+        test_schema_without_known_schema = SQLTableSchema('SFI_TEST')
+        self.assertFalse(test_schema_without_known_schema.is_full_schema())
 
-    def test_get_datatype_regex_pattern(self):
+    def test_get_datatype_regex_pattern(self):#TODO: Split this into individual tests and get them running
         with self.assertRaises(ValueError):
             self.test_schema.get_datatype_regex_pattern('COLUMN9')
 
