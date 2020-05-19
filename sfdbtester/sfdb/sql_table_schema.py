@@ -82,6 +82,19 @@ class SQLTableSchema:
 
 
 Column = namedtuple('Column', ['datatype', 'length', 'with_null'])
+
+__FULL_TEST_SCHEMA = {'NVARCHAR_WITHOUT_NULL':   Column('nvarchar',  8, True),
+                      'NVARCHAR_WITH_NULL':      Column('nvarchar',  8, False),
+                      'BIT_WITHOUT_NULL':        Column('bit',       1, True),
+                      'BIT_WITH_NULL':           Column('bit',       1, False),
+                      'INT_WITHOUT_NULL':        Column('int',       8, True),
+                      'INT_WITH_NULL':           Column('int',       8, False),
+                      'DATETIME_WITHOUT_NULL':   Column('datetime',  1, True),
+                      'DATETIME_WITH_NULL':      Column('datetime',  1, False)}
+
+__SMALL_TEST_SCHEMA = {'COLUMN1': Column('nvarchar', 4, False),
+                       'COLUMN2': Column('nvarchar', 4, False)}
+
 __SFI_ICEBOX_MAPPING = {'IM_ALIAS':                  Column('nvarchar', 40,  False),
                         'IM_RECIPIENT_NO':           Column('nvarchar', 8,   False),
                         'IM_CONFIRMATION_MAIL_SEND': Column('bit',      1,   False),
@@ -115,4 +128,6 @@ __SFI_RECIPIENT = {'RE_PK':                       Column('nvarchar', 24,  False)
 
 KNOWN_SFDB_FILES = [('SFI_ICEBOX_MAPPING',  __SFI_ICEBOX_MAPPING),
                     ('SFI_CURRENCY_SYMBOL', __SFI_CURRENCY_SYMBOL),
-                    ('SFI_RECIPIENT',       __SFI_RECIPIENT)]
+                    ('SFI_RECIPIENT',       __SFI_RECIPIENT),
+                    ('FULL_TEST',           __FULL_TEST_SCHEMA),
+                    ('SMALL_TEST',          __SMALL_TEST_SCHEMA)]

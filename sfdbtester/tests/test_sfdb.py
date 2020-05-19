@@ -1,27 +1,22 @@
 import unittest as ut
-from pathlib import Path
+
 import numpy as np
+
+from sfdbtester.common.utilities import get_resource_filepath
 from sfdbtester.sfdb.sfdb import SFDBContainer, NotSFDBFileError
 
 
-def create_test_sfdbcontainer(name='Test', columns=('COLUMN1', 'COLUMN2'),
+def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),
                               entries=(('val1', 'val2'), ('val3', 'val4'))):
     """Creates an SFDBContainer object for testing"""
     columns = '\t'.join(columns)
-    entries = ['\t'.join(entry) for entry in entries]
     header = ['ENCODING UTF8',
               'INIT',
               f'TABLE\t{name}',
               f'COLUMNS\t{columns}',
               f'INSERT']
+    entries = ['\t'.join(entry) for entry in entries] if len(entries) > 1 else entries
     return SFDBContainer(header + entries)
-
-
-def get_resource_filepath(resource_name):
-    """Returns the absolute filepath of a file in the resource folder."""
-    base_path = Path(__file__).parent
-    file_path = (base_path / f'../resources/{resource_name}').resolve()
-    return file_path
 
 
 class TestSFDBContainer(ut.TestCase):
@@ -98,7 +93,7 @@ class TestSFDBContainer(ut.TestCase):
 
         self.assertEqual(['ENCODING UTF8'], test_sfdb.header[0])
         self.assertEqual(['INIT'], test_sfdb.header[1])
-        self.assertEqual(['TABLE', 'Test'], test_sfdb.header[2])
+        self.assertEqual(['TABLE', 'SMALL_TEST'], test_sfdb.header[2])
         self.assertEqual(['COLUMNS', 'COLUMN1', 'COLUMN2'], test_sfdb.header[3])
         self.assertEqual(['INSERT'], test_sfdb.header[4])
 
@@ -171,7 +166,7 @@ class TestSFDBContainer(ut.TestCase):
             output = f.readlines()
         expected_output = ['ENCODING UTF8\n',
                            'INIT\n',
-                           'TABLE	Test\n',
+                           'TABLE	SMALL_TEST\n',
                            'COLUMNS	COLUMN1	COLUMN2\n',
                            'INSERT\n',
                            'val1	val2\n',
@@ -189,7 +184,7 @@ class TestSFDBContainer(ut.TestCase):
 
         expected_output = ['ENCODING UTF8\n',
                            'INIT\n',
-                           'TABLE	Test\n',
+                           'TABLE	SMALL_TEST\n',
                            'COLUMNS	COLUMN1	COLUMN2\n',
                            'INSERT\n',
                            'val1	val2\n',
@@ -207,7 +202,7 @@ class TestSFDBContainer(ut.TestCase):
             output = f.readlines()
         expected_output = ['ENCODING UTF8\n',
                            'INIT\n',
-                           'TABLE	Test\n',
+                           'TABLE	SMALL_TEST\n',
                            'COLUMNS	COLUMN1	COLUMN2\n',
                            'INSERT\n',
                            '1	2\n',
@@ -226,7 +221,7 @@ class TestSFDBContainer(ut.TestCase):
             output = f.readlines()
         expected_output = ['ENCODING UTF8\n',
                            'INIT\n',
-                           'TABLE	Test\n',
+                           'TABLE	SMALL_TEST\n',
                            'COLUMNS	COLUMN1	COLUMN2\n',
                            'INSERT\n',
                            '1	2\n',
@@ -245,7 +240,7 @@ class TestSFDBContainer(ut.TestCase):
             output = f.readlines()
         expected_output = ['ENCODING UTF8\n',
                            'INIT\n',
-                           'TABLE	Test\n',
+                           'TABLE	SMALL_TEST\n',
                            'COLUMNS	COLUMN1	COLUMN2\n',
                            'INSERT\n',
                            '1	2\n',
@@ -260,8 +255,8 @@ class TestSFDBContainer(ut.TestCase):
 
         output = test_sfdb.get_duplicates()
 
-        expected_output = [(np.array((0, 2, 4)), np.array(('1', '2'))),
-                           (np.array((3, 5)), np.array(('5', '6')))]
+        expected_output = [(np.array((0, 2, 4)), '1\t2'),
+                           (np.array((3, 5)), '5\t6')]
         np.testing.assert_array_equal(expected_output[0][0], output[0][0])
         np.testing.assert_array_equal(expected_output[0][1], output[0][1])
         np.testing.assert_array_equal(expected_output[1][0], output[1][0])

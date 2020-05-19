@@ -1,0 +1,10 @@
+ENCODING UTF8
+INIT
+TABLE	SFI_TESTTABLE
+COLUMNS	COLUMN1	COLUMN2	COLUMN3
+INSERT
+val1	val2	val3
+val1	val2
+val1
+val1	val2	val3	val4
+val1	val2    val3

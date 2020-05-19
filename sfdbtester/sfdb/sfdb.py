@@ -1,8 +1,10 @@
 """This defines an sfdb object as SFDBContainer and stores it as numpy arrays for quick access and comparison.
 Can read and write SFDB files as well"""
-from functools import lru_cache
 import os
+from functools import lru_cache
+
 import numpy as np
+
 from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
@@ -121,7 +123,7 @@ class SFDBContainer:
         """
         sfdb_lines = [line.rstrip() for line in sfdb_stream.readlines()]
 
-        if sfdb_lines[-1] == '':
+        if len(sfdb_lines) > 0 and sfdb_lines[-1] == '':
             del(sfdb_lines[-1])
 
         return sfdb_lines
@@ -189,7 +191,11 @@ class SFDBContainer:
     @lru_cache(3)
     def get_duplicates(self):
         """Returns a list of duplicate sfdb entries. Each entry in that list is an index list of all entries that are
-        duplicates to each other. The lists are sorted smallest to largest index."""
+        duplicates to each other. The lists are sorted smallest to largest index.
+        Parameters:
+            -
+        Returns:
+            list(array, str): The array contains all indices with the duplicate, the second is the entry itself."""
         values, inverse, count = np.unique(self.content, return_inverse=True, return_counts=True, axis=0)
         idx_values_repeated = np.where(count > 1)[0]
         if not idx_values_repeated.size > 0:
@@ -199,6 +205,6 @@ class SFDBContainer:
         _, inverse_rows = np.unique(rows, return_index=True)
 
         res = np.split(cols, inverse_rows[1:])
-        duplicate_list = [(i, self.content[i[0]]) for i in res]
+        duplicate_list = [(i, self._seq_to_sfdb_line(self.content[i[0]])) for i in res]
 
         return duplicate_list
