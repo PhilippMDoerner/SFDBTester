@@ -157,6 +157,10 @@ class SFDBContainer:
         """Turns a list or arrayinto a more easily human readable string"""
         return '\t'.join(sfdb_sequence)
 
+    def get_entry_string(self, content_index):  # TODO: Test this
+        """Returns the string representation of an entry in the SFDB"""
+        return self.sfdb_lines[content_index + self.i_header_end]
+
     def has_schema(self):
         """Checks whether the sfdb file has a functional SQL Table Schema in its SQLTableSchema object"""
         return self.schema.is_full_schema()

@@ -82,13 +82,15 @@ def main(args):
 		logging.info('STARTING REGEX TEST')
 		non_regex_lines = sc.check_content_against_regex(sfdb_new, args.re)
 		sc.log_regex_check(non_regex_lines, args.re)
-		warning_counter = len(non_regex_lines)
+		warning_counter += len(non_regex_lines)
 		logging.info('FINISHED REGEX TEST')
 
 	if args.comparison_sfdb:
 		logging.info('STARTING COMPARISON TEST')
 		sfdb_old = SFDBContainer.from_file(args.comparison_sfdb)
-		warning_counter += sc.check_sfdb_comparison(sfdb_new, sfdb_old, args.ex_lines1, args.ex_lines2, args.ex_col)
+		diverging_lines = sc.check_sfdb_comparison(sfdb_new, sfdb_old, args.ex_lines1, args.ex_lines2, args.ex_col)
+		sc.log_sfdb_comparison(diverging_lines)
+		warning_counter += len(diverging_lines)
 		logging.info('FINISHED COMPARISON TEST')
 
 	if args.write:

@@ -6,7 +6,7 @@ from sfdbtester.common.utilities import get_resource_filepath
 from sfdbtester.sfdb.sfdb import SFDBContainer, NotSFDBFileError
 
 
-def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),
+def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'), # TODO: Fix this function to adjust column numbers based on number of input entries and vice versa
                               entries=(('val1', 'val2'), ('val3', 'val4'))):
     """Creates an SFDBContainer object for testing"""
     columns = '\t'.join(columns)
@@ -43,14 +43,14 @@ class TestSFDBContainer(ut.TestCase):
         i_test = 3
 
         with self.assertRaises(IndexError):
-            entry = test_sfdb[i_test]
+            test_sfdb[i_test]
 
     def test___get_item__invalid_key(self):
         test_sfdb = create_test_sfdbcontainer()
         i_test = 'IAmAnInvalidKey'
 
         with self.assertRaises(TypeError):
-            entry = test_sfdb[i_test]
+            test_sfdb[i_test]
 
     def test___get_item__slice(self):
         test_entries = [['1', '2'], ['3', '4'], ['5', '6']]
