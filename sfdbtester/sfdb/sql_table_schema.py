@@ -70,13 +70,13 @@ class SQLTableSchema:
         length = self.column_properties[column_name].length
         regex_string = None
         if datatype == 'nvarchar':
-            regex_string = '.{0,' + str(length) + '}'
+            regex_string = '^.{0,' + str(length) + '}$'
         elif datatype == 'int':
-            regex_string = r'\d{0,' + str(length) + '}'
+            regex_string = r'^\d{1,' + str(length) + '}$'
         elif datatype == 'bool' or datatype.lower() == 'bit':
-            regex_string = '[01]'
+            regex_string = '^[01]$'
         elif datatype == 'datetime2' or datatype.lower() == 'datetime':
-            regex_string = r'\d\d\d\d-\d\d-\d\d'
+            regex_string = r'^\d\d\d\d-\d\d-\d\d$'
 
         return re.compile(regex_string, re.IGNORECASE) if regex_string else regex_string
 
