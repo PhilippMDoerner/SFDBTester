@@ -87,10 +87,14 @@ __FULL_TEST_SCHEMA = {'NVARCHAR_WITHOUT_NULL':   Column('nvarchar',  8, True),
                       'NVARCHAR_WITH_NULL':      Column('nvarchar',  8, False),
                       'BIT_WITHOUT_NULL':        Column('bit',       1, True),
                       'BIT_WITH_NULL':           Column('bit',       1, False),
+                      'BOOL_WITHOUT_NULL':       Column('bool',      1, True),
+                      'BOOL_WITH_NULL':          Column('bool',      1, False),
                       'INT_WITHOUT_NULL':        Column('int',       8, True),
                       'INT_WITH_NULL':           Column('int',       8, False),
                       'DATETIME_WITHOUT_NULL':   Column('datetime',  1, True),
-                      'DATETIME_WITH_NULL':      Column('datetime',  1, False)}
+                      'DATETIME_WITH_NULL':      Column('datetime',  1, False),
+                      'DATETIME2_WITHOUT_NULL':  Column('datetime2', 1, True),
+                      'DATETIME2_WITH_NULL':     Column('datetime2', 1, False)}
 
 __SMALL_TEST_SCHEMA = {'COLUMN1': Column('nvarchar', 4, False),
                        'COLUMN2': Column('nvarchar', 4, False)}

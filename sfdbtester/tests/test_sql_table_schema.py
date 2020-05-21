@@ -5,7 +5,6 @@ from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
 #TODO: Change from hard coding the patterns to writing them into a file in "resources" and reading that file in
-#TODO: Ensure that the pattern that is returned from get_datattype_regex_pattern only matches exact matches of the regex, not partial
 
 def create_test_sqltableschema(column_names=('1', '2'), schema_name='TEST_SCHEMA',
                                column_properties=(Column('nvarchar', 8, True), Column('int', 4, True))):
@@ -18,7 +17,7 @@ class TestSQLTableSchema(ut.TestCase):
     def setUp(self):
         pass
 
-    def test_columns_valid_columns(self): #TODO: Get this running
+    def test_columns_valid_columns(self):
         test_schema = create_test_sqltableschema()
         expected_columns = ['1', '2']
         self.assertEqual(expected_columns, test_schema.columns)
@@ -37,7 +36,6 @@ class TestSQLTableSchema(ut.TestCase):
         test_schema_without_known_schema = SQLTableSchema('UNKNOWN_SCHEMA')
         self.assertFalse(test_schema_without_known_schema.is_full_schema())
 
-    # TODO: Split this into individual tests and get them running
     def test_get_datatype_regex_pattern_wrong_column(self):
         test_schema = create_test_sqltableschema()
         with self.assertRaises(ValueError):
@@ -91,6 +89,36 @@ class TestSQLTableSchema(ut.TestCase):
         test_string = ''
         self.assertIsNone(bit1_pattern.match(test_string))
 
+    def test_get_datatype_regex_pattern_bool1_valid_0_string(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        bool1_pattern = test_schema.get_datatype_regex_pattern('BOOL_WITHOUT_NULL')
+        test_string = '0'
+        self.assertIsNotNone(bool1_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_bool1_valid_1_string(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        bool1_pattern = test_schema.get_datatype_regex_pattern('BOOL_WITHOUT_NULL')
+        test_string = '1'
+        self.assertIsNotNone(bool1_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_bool1_string_too_long(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        bool1_pattern = test_schema.get_datatype_regex_pattern('BOOL_WITHOUT_NULL')
+        test_string = '12'
+        self.assertIsNone(bool1_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_bool1_invalid_string(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        bool1_pattern = test_schema.get_datatype_regex_pattern('BOOL_WITHOUT_NULL')
+        test_string = 'a'
+        self.assertIsNone(bool1_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_bool1_empty_string(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        bool1_pattern = test_schema.get_datatype_regex_pattern('BOOL_WITHOUT_NULL')
+        test_string = ''
+        self.assertIsNone(bool1_pattern.match(test_string))
+
     def test_get_datatype_regex_pattern_int8_string_too_long(self):
         test_schema = SQLTableSchema('FULL_TEST')
         int8_pattern = test_schema.get_datatype_regex_pattern('INT_WITHOUT_NULL')
@@ -115,43 +143,66 @@ class TestSQLTableSchema(ut.TestCase):
         test_string = 'aA,;.:-)'
         self.assertIsNone(int8_pattern.match(test_string))
 
+    def test_get_datatype_regex_pattern_datetime_invalid_string(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime_pattern = test_schema.get_datatype_regex_pattern('DATETIME_WITHOUT_NULL')
+        test_string = 'An invalid string'
+        self.assertIsNone(datetime_pattern.match(test_string))
 
-
-"""   def test_get_datatype_regex_pattern_datetime_invalid_string(self):
     def test_get_datatype_regex_pattern_datetime_empty_string(self):
-    def test_get_datatype_regex_pattern_datetime_valid_string(self):
-    def test_get_datatype_regex_pattern_datetime_string_too_long(self):
-    def test_get_datatype_regex_pattern_datetime_invalid_date_format(self):
-        
-        
-     
-        datetime10_pattern = self.test_schema.get_datatype_regex_pattern('COLUMN4')
-        self.assertIsNotNone(datetime10_pattern.match('2017-05-22'))
-        self.assertIsNone(datetime10_pattern.match('17-05-22'))
-        self.assertIsNone(datetime10_pattern.match('22-05-2017'))
-        self.assertIsNone(datetime10_pattern.match('22-05-17'))
-        self.assertIsNone(datetime10_pattern.match('2017-22-05'))
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime_pattern = test_schema.get_datatype_regex_pattern('DATETIME_WITHOUT_NULL')
+        test_string = ''
+        self.assertIsNone(datetime_pattern.match(test_string))
 
-        datetime210_pattern = self.test_schema.get_datatype_regex_pattern('COLUMN5')
-        self.assertIsNotNone(datetime210_pattern.match('2017-05-22'))
-        self.assertIsNone(datetime210_pattern.match('17-05-22'))
-        self.assertIsNone(datetime210_pattern.match('22-05-2017'))
-        self.assertIsNone(datetime210_pattern.match('22-05-17'))
-        self.assertIsNone(datetime210_pattern.match('2017-22-05'))
+    def test_get_datatype_regex_pattern_datetime_date_yyyy_mm_dd(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime_pattern = test_schema.get_datatype_regex_pattern('DATETIME_WITHOUT_NULL')
+        test_string = '2020-05-14'
+        self.assertIsNotNone(datetime_pattern.match(test_string))
 
-        datetime220_pattern = self.test_schema.get_datatype_regex_pattern('COLUMN6')
-        self.assertIsNotNone(datetime10_pattern.match('2017-05-22'))
-        self.assertIsNone(datetime220_pattern.match('17-05-22'))
-        self.assertIsNone(datetime220_pattern.match('22-05-2017'))
-        self.assertIsNone(datetime220_pattern.match('22-05-17'))
-        self.assertIsNone(datetime220_pattern.match('2017-22-05'))
+    def test_get_datatype_regex_pattern_datetime_date_dd_mm_yyyy(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime_pattern = test_schema.get_datatype_regex_pattern('DATETIME_WITHOUT_NULL')
+        test_string = '14-05-2020'
+        self.assertIsNone(datetime_pattern.match(test_string))
 
-        bool1_pattern = self.test_schema.get_datatype_regex_pattern('COLUMN7')
-        self.assertIsNotNone(bool1_pattern.match('0'))
-        self.assertIsNotNone(bool1_pattern.match('1'))
-        self.assertIsNone(bool1_pattern.match('23456789'))
-        self.assertIsNone(bool1_pattern.match('aA,;.:-_\'#+*`´?=)(/&%$§"!°^'))
-"""
+    def test_get_datatype_regex_pattern_datetime_date_yy_mm_dd(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime_pattern = test_schema.get_datatype_regex_pattern('DATETIME_WITHOUT_NULL')
+        test_string = '20-05-14'
+        self.assertIsNone(datetime_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_datetime2_invalid_string(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime2_pattern = test_schema.get_datatype_regex_pattern('DATETIME2_WITHOUT_NULL')
+        test_string = 'An invalid string'
+        self.assertIsNone(datetime2_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_datetime2_empty_string(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime2_pattern = test_schema.get_datatype_regex_pattern('DATETIME2_WITHOUT_NULL')
+        test_string = ''
+        self.assertIsNone(datetime2_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_datetime2_date_yyyy_mm_dd(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime2_pattern = test_schema.get_datatype_regex_pattern('DATETIME2_WITHOUT_NULL')
+        test_string = '2020-05-14'
+        self.assertIsNotNone(datetime2_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_datetime2_date_dd_mm_yyyy(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime2_pattern = test_schema.get_datatype_regex_pattern('DATETIME2_WITHOUT_NULL')
+        test_string = '14-05-2020'
+        self.assertIsNone(datetime2_pattern.match(test_string))
+
+    def test_get_datatype_regex_pattern_datetime2_date_yy_mm_dd(self):
+        test_schema = SQLTableSchema('FULL_TEST')
+        datetime2_pattern = test_schema.get_datatype_regex_pattern('DATETIME2_WITHOUT_NULL')
+        test_string = '20-05-14'
+        self.assertIsNone(datetime2_pattern.match(test_string))
+
 
 if __name__ == '__main__':
     ut.main()
