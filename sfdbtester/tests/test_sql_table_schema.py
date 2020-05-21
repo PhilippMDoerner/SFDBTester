@@ -116,6 +116,7 @@ class TestSQLTableSchema(ut.TestCase):
         self.assertIsNone(int8_pattern.match(test_string))
 
 
+
 """   def test_get_datatype_regex_pattern_datetime_invalid_string(self):
     def test_get_datatype_regex_pattern_datetime_empty_string(self):
     def test_get_datatype_regex_pattern_datetime_valid_string(self):
