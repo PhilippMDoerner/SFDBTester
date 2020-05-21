@@ -218,5 +218,17 @@
             "length": 4,
             "with_null": false
         }
+    },
+    "INT_4_CHARACTERS": {
+        "COLUMN1": {
+            "datatype": "int",
+            "length" : 4,
+            "with_null" : false
+        },
+        "COLUMN2": {
+            "datatype": "int",
+            "length" : 4,
+            "with_null" : false
+        }
     }
 }

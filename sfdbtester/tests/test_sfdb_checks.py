@@ -1,4 +1,3 @@
-"""Test all functions within module sfdb_tests"""
 import re
 import unittest as ut
 
@@ -7,6 +6,7 @@ import numpy as np
 from sfdbtester.common.utilities import get_resource_filepath
 from sfdbtester.sfdb import sfdb
 from sfdbtester.sfdb import sfdb_checks as sc
+from sfdbtester.sfdb.sql_table_schema import  SQLTableSchema
 from sfdbtester.tests.test_sfdb import create_test_sfdbcontainer
 
 
@@ -96,7 +96,18 @@ class TestSFDBTests(ut.TestCase):
                            (1, 1, '12345\t12345', False, True, 4)]
         self.assertEqual(expected_output, faulty_lines)
 
-    # def test_check_datatype_conformity_without_datatype_conformity_invalid_datatype(self): # TODO: Finish this test
+    def test_check_datatype_conformity_without_datatype_conformity_string_for_int(self):
+        test_entries = [['abcd', 'efgh'], ['ijkl', 'mnop']]
+        test_schema = SQLTableSchema('INT_4_CHARACTERS')
+        test_sfdb = create_test_sfdbcontainer(entries=test_entries, schema=test_schema)
+
+        faulty_lines = sc.check_datatype_conformity(test_sfdb)
+
+        expected_output = [(0, 0, 'abcd\tefgh', False, True, 4),
+                           (1, 0, 'ijkl\tmnop', False, True, 4),
+                           (0, 1, 'abcd\tefgh', False, True, 4),
+                           (1, 1, 'ijkl\tmnop', False, True, 4)]
+        self.assertEqual(expected_output, faulty_lines)
 
     def test_check_content_against_regex_all_lines_match(self):
         test_sfdb = create_test_sfdbcontainer()

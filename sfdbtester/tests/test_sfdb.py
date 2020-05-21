@@ -4,10 +4,12 @@ import numpy as np
 
 from sfdbtester.common.utilities import get_resource_filepath
 from sfdbtester.sfdb.sfdb import SFDBContainer, NotSFDBFileError
+from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
 def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'), # TODO: Fix this function to adjust column numbers based on number of input entries and vice versa
-                              entries=(('val1', 'val2'), ('val3', 'val4'))):
+                              entries=(('val1', 'val2'), ('val3', 'val4')),
+                              schema=None):
     """Creates an SFDBContainer object for testing"""
     columns = '\t'.join(columns)
     header = ['ENCODING UTF8',
@@ -16,7 +18,13 @@ def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),
               f'COLUMNS\t{columns}',
               f'INSERT']
     entries = ['\t'.join(entry) for entry in entries] if len(entries) > 1 else entries
-    return SFDBContainer(header + entries)
+
+    sfdb = SFDBContainer(header + entries)
+
+    if schema is not None and isinstance(schema, SQLTableSchema):
+        sfdb.schema = schema
+
+    return sfdb
 
 
 class TestSFDBContainer(ut.TestCase):
