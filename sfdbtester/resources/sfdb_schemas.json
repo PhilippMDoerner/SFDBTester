@@ -1,0 +1,222 @@
+{
+    "SFI_ICEBOX_MAPPING": {
+        "IM_ALIAS": {
+            "datatype": "nvarchar",
+            "length": 40,
+            "with_null": false
+        },
+        "IM_RECIPIENT_NO": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": false
+        },
+        "IM_CONFIRMATION_MAIL_SEND": {
+            "datatype": "bit",
+            "length": 1,
+            "with_null": false
+        },
+        "IM_MAILBODY": {
+            "datatype": "nvarchar",
+            "length": 256,
+            "with_null": true
+        }
+    },
+    "SFI_CURRENCY_SYMBOL": {
+        "CS_CURRENCY": {
+            "datatype": "nvarchar",
+            "length": 3,
+            "with_null": false
+        },
+        "CS_SYMBOL": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": false
+        }
+    },
+    "SFI_RECIPIENT": {
+        "RE_PK": {
+            "datatype": "nvarchar",
+            "length": 24,
+            "with_null": false
+        },
+        "RE_RECIPIENT_NO": {
+            "datatype": "nvarchar",
+            "length": 24,
+            "with_null": false
+        },
+        "RE_ENTITY": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        },
+        "RE_SYSTEM": {
+            "datatype": "nvarchar",
+            "length": 16,
+            "with_null": true
+        },
+        "RE_NAME": {
+            "datatype": "nvarchar",
+            "length": 88,
+            "with_null": true
+        },
+        "RE_STREET": {
+            "datatype": "nvarchar",
+            "length": 88,
+            "with_null": true
+        },
+        "RE_COUNTRY": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": false
+        },
+        "RE_ZIPCODE": {
+            "datatype": "nvarchar",
+            "length": 16,
+            "with_null": true
+        },
+        "RE_CITY": {
+            "datatype": "nvarchar",
+            "length": 40,
+            "with_null": true
+        },
+        "RE_ILN": {
+            "datatype": "nvarchar",
+            "length": 16,
+            "with_null": true
+        },
+        "RE_VAT_ID_NO": {
+            "datatype": "nvarchar",
+            "length": 24,
+            "with_null": true
+        },
+        "RE_TAX_ID_NO": {
+            "datatype": "nvarchar",
+            "length": 24,
+            "with_null": true
+        },
+        "RE_EMAIL_TEAM_INVOICE": {
+            "datatype": "nvarchar",
+            "length": 64,
+            "with_null": true
+        },
+        "RE_EMAIL_TEAM_FREIGHT": {
+            "datatype": "nvarchar",
+            "length": 64,
+            "with_null": true
+        },
+        "RE_TEAM_INVOICE": {
+            "datatype": "nvarchar",
+            "length": 64,
+            "with_null": true
+        },
+        "RE_TEAM_FREIGHT": {
+            "datatype": "nvarchar",
+            "length": 64,
+            "with_null": true
+        },
+        "RE_EMAIL_TEMPLATE": {
+            "datatype": "nvarchar",
+            "length": 200,
+            "with_null": true
+        },
+        "RE_INSERVICE": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        },
+        "RE_CONFIRMATION_RECEIPT": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        },
+        "RE_LANGUAGE_CODE": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        },
+        "RE_DEFAULT_VAT_REGISTRATION": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        },
+        "RE_TOUCHLESS": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        }
+    },
+    "FULL_TEST": {
+        "NVARCHAR_WITHOUT_NULL": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        },
+        "NVARCHAR_WITH_NULL": {
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": false
+        },
+        "BIT_WITHOUT_NULL": {
+            "datatype": "bit",
+            "length": 1,
+            "with_null": true
+        },
+        "BIT_WITH_NULL": {
+            "datatype": "bit",
+            "length": 1,
+            "with_null": false
+        },
+        "BOOL_WITHOUT_NULL": {
+            "datatype": "bool",
+            "length": 1,
+            "with_null": true
+        },
+        "BOOL_WITH_NULL": {
+            "datatype": "bool",
+            "length": 1,
+            "with_null": false
+        },
+        "INT_WITHOUT_NULL": {
+            "datatype": "int",
+            "length": 8,
+            "with_null": true
+        },
+        "INT_WITH_NULL": {
+            "datatype": "int",
+            "length": 8,
+            "with_null": false
+        },
+        "DATETIME_WITHOUT_NULL": {
+            "datatype": "datetime",
+            "length": 1,
+            "with_null": true
+        },
+        "DATETIME_WITH_NULL": {
+            "datatype": "datetime",
+            "length": 1,
+            "with_null": false
+        },
+        "DATETIME2_WITHOUT_NULL": {
+            "datatype": "datetime2",
+            "length": 1,
+            "with_null": true
+        },
+        "DATETIME2_WITH_NULL": {
+            "datatype": "datetime2",
+            "length": 1,
+            "with_null": false
+        }
+    },
+    "SMALL_TEST": {
+        "COLUMN1": {
+            "datatype": "nvarchar",
+            "length": 4,
+            "with_null": false
+        },
+        "COLUMN2": {
+            "datatype": "nvarchar",
+            "length": 4,
+            "with_null": false
+        }
+    }
+}

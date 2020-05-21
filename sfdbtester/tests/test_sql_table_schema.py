@@ -4,8 +4,6 @@ from sfdbtester.sfdb.sql_table_schema import Column
 from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
-#TODO: Change from hard coding the patterns to writing them into a file in "resources" and reading that file in
-
 def create_test_sqltableschema(column_names=('1', '2'), schema_name='TEST_SCHEMA',
                                column_properties=(Column('nvarchar', 8, True), Column('int', 4, True))):
     schema = SQLTableSchema(schema_name)

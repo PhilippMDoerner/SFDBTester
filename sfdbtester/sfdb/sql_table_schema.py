@@ -1,5 +1,7 @@
 import re
+import json
 from collections import namedtuple
+from sfdbtester.common.utilities import get_resource_filepath
 
 
 class ColumnError(Exception):
@@ -9,6 +11,8 @@ class ColumnError(Exception):
 class SQLTableSchema:
     """Part of an SFDB object. Defines the datatypes of the individual columns of an sfdb and the associated conditions
     entries need to fulfill. Datatypes are SQL datatypes."""
+    sfdb_schema_file = get_resource_filepath('sfdb_schemas.json')
+
     def __init__(self, sql_table_name):
         self.table_name = sql_table_name
         self.column_properties = self._get_column_properties()
@@ -41,9 +45,27 @@ class SQLTableSchema:
                     Length (int), IsNullAllowed (bool))
             None: When users SQL column definitions are not already known to the
                     program (Other)"""
-        for table_name, table_column_definitions in KNOWN_SFDB_FILES:
-            if table_name == self.table_name:
-                return table_column_definitions
+        known_sfdb_schemas = SQLTableSchema._get_known_sfdb_schemas()
+        if self.table_name in known_sfdb_schemas:
+            return known_sfdb_schemas[self.table_name]
+
+    @classmethod
+    def _get_known_sfdb_schemas(cls):
+        """Reads in the provided SFDB schemas and returns them as dictionary"""
+        with open(cls.sfdb_schema_file, mode='r') as schema_file:
+            sfdb_schemas = json.load(schema_file)
+
+        schemas_dict = {}
+        for schema_name, column_infos in sfdb_schemas.items():
+            column_properties = {}
+            for column_name, column_info in column_infos.items():
+                column = Column(column_info['datatype'],
+                                column_info['length'],
+                                column_info['with_null'])
+
+                column_properties[column_name] = column
+            schemas_dict[schema_name] = column_properties
+        return schemas_dict
 
     def is_full_schema(self):
         """Checks whether the schema actually defines any columns"""
@@ -82,56 +104,3 @@ class SQLTableSchema:
 
 
 Column = namedtuple('Column', ['datatype', 'length', 'with_null'])
-
-__FULL_TEST_SCHEMA = {'NVARCHAR_WITHOUT_NULL':   Column('nvarchar',  8, True),
-                      'NVARCHAR_WITH_NULL':      Column('nvarchar',  8, False),
-                      'BIT_WITHOUT_NULL':        Column('bit',       1, True),
-                      'BIT_WITH_NULL':           Column('bit',       1, False),
-                      'BOOL_WITHOUT_NULL':       Column('bool',      1, True),
-                      'BOOL_WITH_NULL':          Column('bool',      1, False),
-                      'INT_WITHOUT_NULL':        Column('int',       8, True),
-                      'INT_WITH_NULL':           Column('int',       8, False),
-                      'DATETIME_WITHOUT_NULL':   Column('datetime',  1, True),
-                      'DATETIME_WITH_NULL':      Column('datetime',  1, False),
-                      'DATETIME2_WITHOUT_NULL':  Column('datetime2', 1, True),
-                      'DATETIME2_WITH_NULL':     Column('datetime2', 1, False)}
-
-__SMALL_TEST_SCHEMA = {'COLUMN1': Column('nvarchar', 4, False),
-                       'COLUMN2': Column('nvarchar', 4, False)}
-
-__SFI_ICEBOX_MAPPING = {'IM_ALIAS':                  Column('nvarchar', 40,  False),
-                        'IM_RECIPIENT_NO':           Column('nvarchar', 8,   False),
-                        'IM_CONFIRMATION_MAIL_SEND': Column('bit',      1,   False),
-                        'IM_MAILBODY':               Column('nvarchar', 256, True)}
-
-__SFI_CURRENCY_SYMBOL = {'CS_CURRENCY': Column('nvarchar', 3, False),
-                         'CS_SYMBOL':   Column('nvarchar', 8, False)}
-
-__SFI_RECIPIENT = {'RE_PK':                       Column('nvarchar', 24,  False),
-                   'RE_RECIPIENT_NO':             Column('nvarchar', 24,  False),
-                   'RE_ENTITY':                   Column('nvarchar', 8,   True),
-                   'RE_SYSTEM':                   Column('nvarchar', 16,  True),
-                   'RE_NAME':                     Column('nvarchar', 88,  True),
-                   'RE_STREET':                   Column('nvarchar', 88,  True),
-                   'RE_COUNTRY':                  Column('nvarchar', 8,   False),
-                   'RE_ZIPCODE':                  Column('nvarchar', 16,  True),
-                   'RE_CITY':                     Column('nvarchar', 40,  True),
-                   'RE_ILN':                      Column('nvarchar', 16,  True),
-                   'RE_VAT_ID_NO':                Column('nvarchar', 24,  True),
-                   'RE_TAX_ID_NO':                Column('nvarchar', 24,  True),
-                   'RE_EMAIL_TEAM_INVOICE':       Column('nvarchar', 64,  True),
-                   'RE_EMAIL_TEAM_FREIGHT':       Column('nvarchar', 64,  True),
-                   'RE_TEAM_INVOICE':             Column('nvarchar', 64,  True),
-                   'RE_TEAM_FREIGHT':             Column('nvarchar', 64,  True),
-                   'RE_EMAIL_TEMPLATE':           Column('nvarchar', 200, True),
-                   'RE_INSERVICE':                Column('nvarchar', 8,   True),
-                   'RE_CONFIRMATION_RECEIPT':     Column('nvarchar', 8,   True),
-                   'RE_LANGUAGE_CODE':            Column('nvarchar', 8,   True),
-                   'RE_DEFAULT_VAT_REGISTRATION': Column('nvarchar', 8,   True),
-                   'RE_TOUCHLESS':                Column('nvarchar', 8,   True)}
-
-KNOWN_SFDB_FILES = [('SFI_ICEBOX_MAPPING',  __SFI_ICEBOX_MAPPING),
-                    ('SFI_CURRENCY_SYMBOL', __SFI_CURRENCY_SYMBOL),
-                    ('SFI_RECIPIENT',       __SFI_RECIPIENT),
-                    ('FULL_TEST',           __FULL_TEST_SCHEMA),
-                    ('SMALL_TEST',          __SMALL_TEST_SCHEMA)]
