@@ -157,8 +157,13 @@ class SFDBContainer:
         """Turns a list or arrayinto a more easily human readable string"""
         return '\t'.join(sfdb_sequence)
 
-    def get_entry_string(self, content_index):  # TODO: Test this
+    def get_entry_string(self, content_index):
         """Returns the string representation of an entry in the SFDB"""
+        if not isinstance(content_index, int):
+            raise TypeError(f'Index must be an integer!')
+        if content_index < 0:
+            raise IndexError(f'Index out of bounds. No negative Indices allowed!')
+
         return self.sfdb_lines[content_index + self.i_header_end]
 
     def has_schema(self):

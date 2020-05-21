@@ -117,6 +117,44 @@ class TestSFDBContainer(ut.TestCase):
 
         self.assertEqual(test_columns, test_sfdb.columns)
 
+    def test_get_entry_string_index_in_bounds(self):
+        test_entries = [['1', '2'], ['3', '4']]
+        test_sfdb = create_test_sfdbcontainer(entries=test_entries)
+
+        test_index1 = 0
+        entry_string1 = test_sfdb.get_entry_string(test_index1)
+        expected_output1 = '1\t2'
+        self.assertEqual(expected_output1, entry_string1)
+
+        test_index2 = 1
+        entry_string2 = test_sfdb.get_entry_string(test_index2)
+        expected_output2 = '3\t4'
+        self.assertEqual(expected_output2, entry_string2)
+
+    def test_get_entry_string_index_out_of_bounds(self):
+        test_entries = [['1', '2'], ['3', '4']]
+        test_sfdb = create_test_sfdbcontainer(entries=test_entries)
+
+        test_index = 3
+        with self.assertRaises(IndexError):
+            entry_string = test_sfdb.get_entry_string(test_index)
+
+    def test_get_entry_string_negative_index(self):
+        test_entries = [['1', '2'], ['3', '4']]
+        test_sfdb = create_test_sfdbcontainer(entries=test_entries)
+
+        test_index = -1
+        with self.assertRaises(IndexError):
+            entry_string = test_sfdb.get_entry_string(test_index)
+
+    def test_get_entry_sing_string_input(self):
+        test_entries = [['1', '2'], ['3', '4']]
+        test_sfdb = create_test_sfdbcontainer(entries=test_entries)
+
+        test_index = '1'
+        with self.assertRaises(TypeError):
+            entry_string = test_sfdb.get_entry_string(test_index)
+
     def test_read_sfdb_from_file_wrong_file_path(self):
         with self.assertRaises(FileNotFoundError):
             SFDBContainer.read_sfdb_from_file('/FakeDir/NotAFile.sfdb')
