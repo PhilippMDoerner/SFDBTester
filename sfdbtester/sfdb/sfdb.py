@@ -131,7 +131,7 @@ class SFDBContainer:
             list: List of strings. Each string is a single line in the sfdb file
             None: If file_path is empty
         """
-        sfdb_lines = [line.rstrip() for line in sfdb_stream.readlines()]
+        sfdb_lines = [line.rstrip('\n') for line in sfdb_stream.readlines()]
 
         if len(sfdb_lines) > 0 and sfdb_lines[-1] == '':
             del(sfdb_lines[-1])

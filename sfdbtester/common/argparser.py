@@ -5,15 +5,18 @@ from sfdbtester.common import userinput as ui
 
 
 def exclusion_index(arg):
+    """Checks whether an index is a valid line-index of an entry in an SFDB file. Line indices start at 1. As SFDB
+    headers take up the first 5 lines, the smallest allowed index is 6"""
     arg = int(arg)
     if arg <= 0:
         raise argparse.ArgumentTypeError(f"The index {arg} is invalid ! Negative Indices are not allowed!")
-    if arg <= 5:
+    if 0 < arg <= 5:
         raise argparse.ArgumentTypeError(f"The index {arg} is invalid ! Index must be larger than 5")
     return arg
 
 
 def filepath(arg):
+    """Checks whether the filepath provided as argument leads to an actual file."""
     if not os.path.isfile(arg):
         argparse.ArgumentTypeError(f'The file {arg} does not exist!')
     else:
@@ -21,6 +24,7 @@ def filepath(arg):
 
 
 def regex(arg):
+    """Checks whether the regular expression provided as argument is a valid regular expression."""
     try:
         regex_pattern = re.compile(arg, re.IGNORECASE)
         return regex_pattern
@@ -52,41 +56,44 @@ def get_args():
     parser.add_argument('-r',  '--request', action='store_true',
                         help='If enabled requests command line arguments individually via user-input')
 
-    cmd_args = parser.parse_args()
-    if cmd_args.request:
-        cmd_args = request_missing_args(cmd_args)
-    return cmd_args
+    args = parser.parse_args()
+    if args.request:
+        args = request_missing_args(cmd_args)
+    return args
 
 
-def request_missing_args(cmd_args):
+def request_missing_args(partial_args):
+    """Sees which arguments are logically missing based on the already provided arguments and actively requests them
+    from the user. """
     # Request -re Regex
-    if cmd_args.re is None:
-        cmd_args.re = ui.request_regex_pattern("Please enter a regular expression matching SFDB lines (optional):\n")
+    if partial_args.re is None:
+        partial_args.re = ui.request_regex_pattern("Please enter a regular expression matching SFDB lines (optional):"
+                                                   "\n")
     # Request -c Filepath
-    if cmd_args.comparison_sfdb is None:
-        cmd_args.comparison_sfdb = ui.request_filepath('Path to old SFDB file for comparison tests (optional):\n')
+    if partial_args.comparison_sfdb is None:
+        partial_args.comparison_sfdb = ui.request_filepath('Path to old SFDB file for comparison tests (optional):\n')
     # Request -x1 exclusion row indices
-    if cmd_args.ex_lines1 is None and cmd_args.comparison_sfdb is not None:
+    if partial_args.ex_lines1 is None and partial_args.comparison_sfdb is not None:
         input_message = ("\tPlease enter the indices of all lines in the old SFDB "
                          "(starting from 1) that were removed, separated by "
                          "spaces (optional):\n\t")
         cmd_args.ex_lines1 = ui.request_list_of_int(input_message, min_value=6)
 
     # Request -x2 eclusion row indices
-    if cmd_args.ex_lines2 is None and cmd_args.comparison_sfdb is not None:
+    if partial_args.ex_lines2 is None and partial_args.comparison_sfdb is not None:
         input_message = ("\tPlease enter the indices of all lines in the new SFDB "
                          "(starting from 1) that were added, separated by spaces"
                          " (optional):\n\t")
-        cmd_args.ex_lines2 = ui.request_list_of_int(input_message, min_value=6)
+        partial_args.ex_lines2 = ui.request_list_of_int(input_message, min_value=6)
 
     # Request -xc eclusion column names
-    if cmd_args.ex_col is None and cmd_args.comparison_sfdb is not None:
+    if partial_args.ex_col is None and partial_args.comparison_sfdb is not None:
         input_message = ('\tPlease enter the name of all columns you wish to '
                          'ignore for the comparison, separated by spaces '
                          '(optional):\n\t')
-        cmd_args.ex_col = input(input_message).split()
+        partial_args.ex_col = input(input_message).split()
 
-    return cmd_args
+    return partial_args
 
 
 if __name__ == '__main__':

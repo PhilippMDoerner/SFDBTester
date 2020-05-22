@@ -1,4 +1,4 @@
-from sfdbtester import sfdbtester
+from sfdbtester import executable
 
 if __name__ == '__main__':
-	sfdbtester.run()
+    executable.run()

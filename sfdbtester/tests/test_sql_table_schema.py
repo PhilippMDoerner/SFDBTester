@@ -5,7 +5,7 @@ from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
 def create_test_sqltableschema(column_names=('1', '2'), schema_name='TEST_SCHEMA',
-                               column_properties=(Column('nvarchar', 8, True), Column('int', 4, True))):
+                               column_properties=(Column('1', 'nvarchar', 8, True), Column('2', 'int', 4, True))):
     schema = SQLTableSchema(schema_name)
     schema.columns = {name: properties for name, properties in zip(column_names, column_properties)}
     return schema

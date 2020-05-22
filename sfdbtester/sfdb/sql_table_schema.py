@@ -53,26 +53,33 @@ class SQLTableSchema:
                     program (Other)"""
         known_sfdb_schemas = SQLTableSchema._get_known_sfdb_schemas()
         if self.table_name in known_sfdb_schemas:
-            return known_sfdb_schemas[self.table_name]
+            this_schema = known_sfdb_schemas[self.table_name]
+
+            for column_name, column in this_schema.items():
+                if column.datatype == 'datetime' or column.datatype == 'datetime2':
+                    this_schema[column_name] = Column(column.name, column.datatype, 10, column.with_null)
+
+            return this_schema
+
         return None
 
     @classmethod
     def _get_known_sfdb_schemas(cls):
+
         """Reads in the SFDB schemas of all known tables provided by the sfdb_schemas.json resource and returns them as
         dictionary"""
         with open(cls.sfdb_schema_file, mode='r') as schema_file:
-            sfdb_schemas = json.load(schema_file)
+            sfdb_schemas_json = json.load(schema_file)
 
         schemas_dict = {}
-        for schema_name, column_infos in sfdb_schemas.items():
+        for table_name, table_columns in sfdb_schemas_json.items():
             column_properties = {}
-            for column_name, column_info in column_infos.items():
-                column = Column(column_info['datatype'],
-                                column_info['length'],
-                                column_info['with_null'])
 
-                column_properties[column_name] = column
-            schemas_dict[schema_name] = column_properties
+            for col in table_columns:
+                column = Column(col['column_name'], col['datatype'], col['length'], col['with_null'])
+                column_properties[col['column_name']] = column
+
+            schemas_dict[table_name] = column_properties
         return schemas_dict
 
     def is_full_schema(self):
@@ -100,15 +107,15 @@ class SQLTableSchema:
         length = self.column_properties[column_name].length
         regex_string = None
         if datatype == 'nvarchar':
-            regex_string = '^.{0,' + str(length) + '}$'
+            regex_string = r'^.{0,' + str(length) + '}$'
         elif datatype == 'int':
             regex_string = r'^\d{1,' + str(length) + '}$'
         elif datatype == 'bool' or datatype.lower() == 'bit':
-            regex_string = '^[01]$'
+            regex_string = r'^[01]$'
         elif datatype == 'datetime2' or datatype.lower() == 'datetime':
             regex_string = r'^\d\d\d\d-\d\d-\d\d$'
 
         return re.compile(regex_string, re.IGNORECASE) if regex_string else regex_string
 
 
-Column = namedtuple('Column', ['datatype', 'length', 'with_null'])
+Column = namedtuple('Column', ['name', 'datatype', 'length', 'with_null'])

@@ -7,7 +7,7 @@ from sfdbtester.sfdb.sfdb import SFDBContainer, NotSFDBFileError
 from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
-def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'), # TODO: Fix this function to adjust column numbers based on number of input entries and vice versa
+def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),  # TODO: Fix this function to adjust column numbers based on number of input entries and vice versa
                               entries=(('val1', 'val2'), ('val3', 'val4')),
                               schema=None):
     """Creates an SFDBContainer object for testing"""
@@ -137,7 +137,7 @@ class TestSFDBContainer(ut.TestCase):
 
         test_index = 3
         with self.assertRaises(IndexError):
-            entry_string = test_sfdb.get_entry_string(test_index)
+            test_sfdb.get_entry_string(test_index)
 
     def test_get_entry_string_negative_index(self):
         test_entries = [['1', '2'], ['3', '4']]
@@ -145,7 +145,7 @@ class TestSFDBContainer(ut.TestCase):
 
         test_index = -1
         with self.assertRaises(IndexError):
-            entry_string = test_sfdb.get_entry_string(test_index)
+            test_sfdb.get_entry_string(test_index)
 
     def test_get_entry_sing_string_input(self):
         test_entries = [['1', '2'], ['3', '4']]
@@ -153,7 +153,7 @@ class TestSFDBContainer(ut.TestCase):
 
         test_index = '1'
         with self.assertRaises(TypeError):
-            entry_string = test_sfdb.get_entry_string(test_index)
+            test_sfdb.get_entry_string(test_index)
 
     def test_read_sfdb_from_file_wrong_file_path(self):
         with self.assertRaises(FileNotFoundError):

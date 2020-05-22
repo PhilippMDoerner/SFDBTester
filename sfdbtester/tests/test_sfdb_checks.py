@@ -1,8 +1,7 @@
+""""""
 import re
 import unittest as ut
-
 import numpy as np
-
 from sfdbtester.common.utilities import get_resource_filepath
 from sfdbtester.sfdb import sfdb
 from sfdbtester.sfdb import sfdb_checks as sc
@@ -85,15 +84,16 @@ class TestSFDBTests(ut.TestCase):
         self.assertEqual(expected_output, faulty_lines)
 
     def test_check_datatype_conformity_without_datatype_conformity_values_too_long(self):
-        test_entries = [['12345', '123456'], ['12345', '12345']]
+        test_entries = [['12345', '56789'], ['12345', '34567']]
         test_sfdb = create_test_sfdbcontainer(entries=test_entries)
 
         faulty_lines = sc.check_datatype_conformity(test_sfdb)
 
-        expected_output = [(0, 0, '12345\t123456', False, True, 4),
-                           (1, 0, '12345\t12345', False, True, 4),
-                           (0, 1, '12345\t123456', False, True, 4),
-                           (1, 1, '12345\t12345', False, True, 4)]
+        error_msg = 'Entry too long with 5 chars! Allowed length is 4!'
+        expected_output = [(0, 'COLUMN1', '12345\t56789', '12345', error_msg),
+                           (1, 'COLUMN1', '12345\t34567', '12345', error_msg),
+                           (0, 'COLUMN2', '12345\t56789', '56789', error_msg),
+                           (1, 'COLUMN2', '12345\t34567', '34567', error_msg)]
         self.assertEqual(expected_output, faulty_lines)
 
     def test_check_datatype_conformity_without_datatype_conformity_string_for_int(self):
@@ -103,10 +103,11 @@ class TestSFDBTests(ut.TestCase):
 
         faulty_lines = sc.check_datatype_conformity(test_sfdb)
 
-        expected_output = [(0, 0, 'abcd\tefgh', False, True, 4),
-                           (1, 0, 'ijkl\tmnop', False, True, 4),
-                           (0, 1, 'abcd\tefgh', False, True, 4),
-                           (1, 1, 'ijkl\tmnop', False, True, 4)]
+        error_msg = 'Mismatch to SQL datatype-pattern ^\\d{1,4}$!'
+        expected_output = [(0, 'COLUMN1', 'abcd\tefgh', 'abcd', error_msg),
+                           (1, 'COLUMN1', 'ijkl\tmnop', 'ijkl', error_msg),
+                           (0, 'COLUMN2', 'abcd\tefgh', 'efgh', error_msg),
+                           (1, 'COLUMN2', 'ijkl\tmnop', 'mnop', error_msg)]
         self.assertEqual(expected_output, faulty_lines)
 
     def test_check_content_against_regex_all_lines_match(self):

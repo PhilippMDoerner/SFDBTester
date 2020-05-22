@@ -28,10 +28,16 @@ def log_sfdb_content_format_check(column_count, faulty_lines):
         logging.info('    No issues.')
         return
 
-    logging.info(f'Required number of values: {column_count:>{MAX_DIGITS}}\n'
-                 f'           Line | # Values')
+    column1 = f'{"Line":>12}'
+    column2 = '# Values'
+    column3 = 'Entry'
+    logging.info(f'    Required number of values: {column_count}\n'
+                 f' {column1} | {column2} | {column3}')
+
     for i, line in faulty_lines:
-        logging.info(f'     {i + INDEX_SHIFT:<{MAX_DIGITS + 4}} | {len(line):>{MAX_DIGITS}}')
+        value1 = f'{i + INDEX_SHIFT:>{len(column1)}}'
+        value2 = f'{len(line):<{len(column2)}}'
+        logging.info(f' {value1} | {value2} | {line}')
 
 
 def check_content_format(sfdb):
@@ -63,11 +69,15 @@ def log_excel_autoformatting_check(formatted_cells_list):
         logging.info('    No issues.')
         return
 
-    faulty_lines_table_header = '      ' + (' ' * MAX_DIGITS) + 'Line | Entry'
-    logging.info(faulty_lines_table_header)
+    column1 = f'{"Line":>12}'
+    column2 = 'Entry'
+    table_header = f' {column1} | {column2}'
+    logging.info(table_header)
+
     for i_row, i_col, line in formatted_cells_list:
-        line_string = _list_to_string(line)
-        logging.info(f'      {i_row + INDEX_SHIFT:>{MAX_DIGITS + 4}} | {line_string}')
+        value1 = f'{i_row + INDEX_SHIFT:>{len(column1)}}'
+        value2 = _list_to_string(line)
+        logging.info(f' {value1} | \'{value2}\'')
 
 
 def check_excel_autoformatting(sfdb):
@@ -105,11 +115,26 @@ def log_duplicates_check(duplicates_list):
         logging.info('    No issues.')
         return
 
-    logging.info(f'    First Occurrence | Duplicate Indices')
+    column1 = f'{"Line":>12}'
+    column2 = 'Duplicate Indices'
+    column3 = 'Entry'
+    logging.info(f' {column1} | {column2} | {column3}')
+
     for indices, line in duplicates_list:
         indices = [i + INDEX_SHIFT for i in indices]
-        logging.info(f'    {indices[0]:>{MAX_DIGITS + 6}} | {_list_to_string(indices[1:])}\n'
-                     f'    Entry: \'{_list_to_string(line)}\'')
+        value1 = f'{indices[0]:>{len(column1)}}'
+
+        duplicate_index_string = _list_to_string(indices[1:])
+        value2_len = _get_duplicate_table_string_length(duplicate_index_string)
+        value2 = f'{duplicate_index_string:<{value2_len}}'
+
+        logging.info(f' {value1} | {value2} | \'{line}\'')
+
+
+def _get_duplicate_table_string_length(entry_string):
+    header_length = len('Duplicate Indices')
+    entry_string_length = header_length if len(entry_string) < header_length else len(entry_string)
+    return entry_string_length
 
 
 def check_for_duplicates(sfdb):
@@ -123,7 +148,7 @@ def check_for_duplicates(sfdb):
     return sfdb.get_duplicates()
 
 
-def log_regex_check(non_regex_lines, regex_pattern):  # TODO: Hier muss noch explizit am Format gefeilt werden
+def log_regex_check(non_regex_lines, regex_pattern):
     """Logs the result of a check whether an sfdb had a valid header
     Parameters:
         non_regex_lines (list(int, string)): A list of lines that didn't match the regular expression in regex_pattern
@@ -135,10 +160,17 @@ def log_regex_check(non_regex_lines, regex_pattern):  # TODO: Hier muss noch exp
     if len(non_regex_lines) == 0:
         logging.info('    No issues.')
         return
+
     logging.info(f'    Regex: \"{str(regex_pattern)[12:-2]}\":')
-    logging.info(f'          Line | Entry')
+
+    column1 = f'{"Line":<12}'
+    column2 = 'Entry'
+    logging.info(f' {column1} | {column2}')
+
     for i, line in non_regex_lines:
-        logging.info(f'        {i + INDEX_SHIFT:>{MAX_DIGITS}} | {_list_to_string(line)}')
+        value1 = f'{i + INDEX_SHIFT:>{len(column1)}}'
+        value2 = _list_to_string(line)
+        logging.info(f' {value1} | \'{value2}\'')
 
 
 def check_content_against_regex(sfdb, regex_pattern):
@@ -175,24 +207,28 @@ def log_datatype_check(non_conform_lines):
     if non_conform_lines is None:
         logging.info('    No Column Definitions found. Test skipped')
         return
+
     elif len(non_conform_lines) == 0:
         logging.info('    No issues.')
         return
 
-    logging.info(f'    % Line-index | Column | Issue             | Entry', (' ' * MAX_DIGITS))
-    for (i, column_index, content_line, has_illegal_null, entry_not_match, length) in non_conform_lines:
-        i += INDEX_SHIFT
-        if has_illegal_null:
-            content_string = _list_to_string(content_line)
-            logging.info(f'     {i:<10} | {column_index + 1:<6} | "null" not allowed in column !       | '
-                         f'{content_string}')
-        elif entry_not_match:
-            content_string = _list_to_string(content_line)
-            logging.info(f'     {i:<10} | {column_index + 1:<6} | Value has incorrect length {length}! | '
-                         f'{content_string}')
-        else:
-            content_string = _list_to_string(content_line)
-            logging.info(f'     {i:<10} | -      | Unknown Error                        | {content_string}')
+    column1 = f'{"Line":>12}'
+    column2 = f'{"Column":<25}'
+    column3 = f'{"Warning":<55}'
+    column4 = f'{"Faulty Value":<20}'
+    column5 = 'Entry'
+    logging.info(f' {column1} | {column2} | {column3} | {column4} | {column5}')
+
+    for entry_index, column_name, entry, faulty_value, error_msg in non_conform_lines:
+        line_index = entry_index + INDEX_SHIFT
+
+        value1 = f'{line_index:>{len(column1)}}'
+        value2 = f'{column_name:<{len(column2)}}'
+        value3 = f'{error_msg:<{len(column3)}}'
+        value4 = f'{faulty_value:<20}'
+        content_string = _list_to_string(entry)
+
+        logging.info(f' {value1} | {value2} | {value3} | {value4} | \'{content_string}\'')
 
 
 def check_datatype_conformity(sfdb):
@@ -217,48 +253,71 @@ def check_datatype_conformity(sfdb):
             length: The amount of characters allowed in the column that
                 caused the warning.
     """
-    warning_counter = 0
-
     if not sfdb.has_schema():
         return None
 
     list_of_issues = []
-    for i, column_name in enumerate(sfdb.columns):
+    for column_index, column_name in enumerate(sfdb.columns):
         column = sfdb.schema[column_name]
-        regex_pattern = sfdb.schema.get_datatype_regex_pattern(
-            column_name)  # Returns None if datatype is not known to function
+        regex_pattern = sfdb.schema.get_datatype_regex_pattern(column_name)
 
         if regex_pattern is None:  # if datatype is not known to function, skip comparison
             logging.info(f'    Skipped comparison! {column_name} has unknown datatype {column.datatype}.')
-            warning_counter += 1
             continue
 
-        for j, line in enumerate(sfdb.content):
-            cell_value = line[i]
+        for entry_index, entry in enumerate(sfdb.content):
+            cell_value = entry[column_index]
 
-            has_illegal_null = not column.with_null and cell_value is None
-            entry_not_match = (len(cell_value) > column.length or not regex_pattern.search(cell_value))
-
-            if has_illegal_null or entry_not_match:
-                line_string = sfdb._seq_to_sfdb_line(line)
-                list_of_issues.append((j, i, line_string, has_illegal_null, entry_not_match, column.length))
+            if _is_non_conform_with_column(cell_value, column, regex_pattern):
+                line = sfdb.sfdb_lines[entry_index + INDEX_SHIFT - 1]
+                error_msg = _get_datatype_error_message(cell_value, column, regex_pattern)
+                list_of_issues.append((entry_index, column.name, line, cell_value, error_msg))
 
     return list_of_issues
 
 
+def _is_non_conform_with_column(entry, column, column_pattern):
+    """Determines whether an entry is conform with a column's datatype"""
+    has_illegal_null = not column.with_null and entry == ''
+    entry_too_long = len(entry) > column.length
+    entry_not_match = column_pattern.search(entry) is None
+    return has_illegal_null or entry_too_long or entry_not_match
+
+
+def _get_datatype_error_message(entry, column, column_pattern):
+    """Determines the error message why this entry was not conform with the column's datatype"""
+    has_illegal_null = not column.with_null and entry == ''
+    entry_too_long = len(entry) > column.length
+    entry_not_match = column_pattern.search(entry) is None
+
+    if has_illegal_null:
+        return "Null not allowed in column !"
+    elif entry_too_long:
+        return f"Entry too long with {len(entry)} chars! Allowed length is {column.length}!"
+    elif entry_not_match:
+        return f"Mismatch to SQL datatype-pattern {column_pattern.pattern}!"
+    else:
+        return "Unknown Error"
+
+
 def log_sfdb_comparison(diverging_lines):
     if diverging_lines is None:
-        logging.info(
-            '    Unable to do Comparison Test. Files did not have equal lengths with the given lines excluded.')
+        logging.info('     Comparison Test Skipped. Files did not have equal lengths with the given lines excluded.')
         return
+
     elif len(diverging_lines) == 0:
         logging.info('    No issues.')
         return
 
+    column1 = f'{"Index":>21}'
+    column2 = 'Entry'
+    logging.info(f' {column1} | {column2}')
+
     for i_new, line_new, i_old, line_old in diverging_lines:
-        logging.info(f'    !DEVIATION WARNING! :\n'
-                     f'    Old line {i_old + INDEX_SHIFT:<{MAX_DIGITS}}: {line_old}\n'
-                     f'    New line {i_new + INDEX_SHIFT:<{MAX_DIGITS}}: {line_new}')
+        index1 = f'{i_old + INDEX_SHIFT:>{len(column1)}}'
+        index2 = f'{i_new + INDEX_SHIFT:>{len(column1)}}'
+        logging.info(f'    Old line {index1}: \'{line_old}\'\n'
+                     f'    New line {index2}: \'{line_new}\'')
 
 
 def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_lines_old=(), excluded_columns=()):
@@ -299,6 +358,10 @@ def _list_to_string(input_list):
     """Turns a list into a more easily human readable string"""
     if isinstance(input_list, np.ndarray):
         input_list = input_list.astype(str)
+    elif isinstance(input_list, str):
+        return input_list
+    else:
+        input_list = [str(item) for item in input_list]
     return '   '.join(input_list)
 
 

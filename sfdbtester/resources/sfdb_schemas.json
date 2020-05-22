@@ -1,234 +1,278 @@
 {
-    "SFI_ICEBOX_MAPPING": {
-        "IM_ALIAS": {
+    "SFI_ICEBOX_MAPPING": [
+        {
+            "column_name": "IM_ALIAS",
             "datatype": "nvarchar",
             "length": 40,
             "with_null": false
         },
-        "IM_RECIPIENT_NO": {
+        {
+            "column_name": "IM_RECIPIENT_NO",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": false
         },
-        "IM_CONFIRMATION_MAIL_SEND": {
+        {
+            "column_name": "IM_CONFIRMATION_MAIL_SEND",
             "datatype": "bit",
             "length": 1,
             "with_null": false
         },
-        "IM_MAILBODY": {
+        {
+            "column_name": "IM_MAILBODY",
             "datatype": "nvarchar",
             "length": 256,
             "with_null": true
         }
-    },
-    "SFI_CURRENCY_SYMBOL": {
-        "CS_CURRENCY": {
+    ],
+    "SFI_CURRENCY_SYMBOL": [
+        {
+            "column_name": "CS_CURRENCY",
             "datatype": "nvarchar",
             "length": 3,
             "with_null": false
         },
-        "CS_SYMBOL": {
+        {
+            "column_name": "CS_SYMBOL",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": false
         }
-    },
-    "SFI_RECIPIENT": {
-        "RE_PK": {
+    ],
+    "SFI_RECIPIENT": [
+        {
+            "column_name": "RE_PK",
             "datatype": "nvarchar",
             "length": 24,
             "with_null": false
         },
-        "RE_RECIPIENT_NO": {
+        {
+            "column_name": "RE_RECIPIENT_NO",
             "datatype": "nvarchar",
             "length": 24,
             "with_null": false
         },
-        "RE_ENTITY": {
+        {
+            "column_name": "RE_ENTITY",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": true
         },
-        "RE_SYSTEM": {
+        {
+            "column_name": "RE_SYSTEM",
             "datatype": "nvarchar",
             "length": 16,
             "with_null": true
         },
-        "RE_NAME": {
+        {
+            "column_name": "RE_NAME",
             "datatype": "nvarchar",
             "length": 88,
             "with_null": true
         },
-        "RE_STREET": {
+        {
+            "column_name": "RE_STREET",
             "datatype": "nvarchar",
             "length": 88,
             "with_null": true
         },
-        "RE_COUNTRY": {
+        {
+            "column_name": "RE_COUNTRY",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": false
         },
-        "RE_ZIPCODE": {
+        {
+            "column_name": "RE_ZIPCODE",
             "datatype": "nvarchar",
             "length": 16,
             "with_null": true
         },
-        "RE_CITY": {
+        {
+            "column_name": "RE_CITY",
             "datatype": "nvarchar",
             "length": 40,
             "with_null": true
         },
-        "RE_ILN": {
+        {
+            "column_name": "RE_ILN",
             "datatype": "nvarchar",
             "length": 16,
             "with_null": true
         },
-        "RE_VAT_ID_NO": {
+        {
+            "column_name": "RE_VAT_ID_NO",
             "datatype": "nvarchar",
             "length": 24,
             "with_null": true
         },
-        "RE_TAX_ID_NO": {
+        {
+            "column_name": "RE_TAX_ID_NO",
             "datatype": "nvarchar",
             "length": 24,
             "with_null": true
         },
-        "RE_EMAIL_TEAM_INVOICE": {
+        {
+            "column_name": "RE_EMAIL_TEAM_INVOICE",
             "datatype": "nvarchar",
             "length": 64,
             "with_null": true
         },
-        "RE_EMAIL_TEAM_FREIGHT": {
+        {
+            "column_name": "RE_EMAIL_TEAM_FREIGHT",
             "datatype": "nvarchar",
             "length": 64,
             "with_null": true
         },
-        "RE_TEAM_INVOICE": {
+        {
+            "column_name": "RE_TEAM_INVOICE",
             "datatype": "nvarchar",
             "length": 64,
             "with_null": true
         },
-        "RE_TEAM_FREIGHT": {
+        {
+            "column_name": "RE_TEAM_FREIGHT",
             "datatype": "nvarchar",
             "length": 64,
             "with_null": true
         },
-        "RE_EMAIL_TEMPLATE": {
+        {
+            "column_name": "RE_EMAIL_TEMPLATE",
             "datatype": "nvarchar",
             "length": 200,
             "with_null": true
         },
-        "RE_INSERVICE": {
+        {
+            "column_name": "RE_INSERVICE",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": true
         },
-        "RE_CONFIRMATION_RECEIPT": {
+        {
+            "column_name": "RE_CONFIRMATION_RECEIPT",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": true
         },
-        "RE_LANGUAGE_CODE": {
+        {
+            "column_name": "RE_LANGUAGE_CODE",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": true
         },
-        "RE_DEFAULT_VAT_REGISTRATION": {
+        {
+            "column_name": "RE_DEFAULT_VAT_REGISTRATION",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": true
         },
-        "RE_TOUCHLESS": {
+        {
+            "column_name": "RE_TOUCHLESS",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": true
         }
-    },
-    "FULL_TEST": {
-        "NVARCHAR_WITHOUT_NULL": {
-            "datatype": "nvarchar",
-            "length": 8,
-            "with_null": true
-        },
-        "NVARCHAR_WITH_NULL": {
+    ],
+    "FULL_TEST": [
+        {
+            "column_name": "NVARCHAR_WITHOUT_NULL",
             "datatype": "nvarchar",
             "length": 8,
             "with_null": false
         },
-        "BIT_WITHOUT_NULL": {
+        {
+            "column_name": "NVARCHAR_WITH_NULL",
+            "datatype": "nvarchar",
+            "length": 8,
+            "with_null": true
+        },
+        {
+            "column_name": "BIT_WITHOUT_NULL",
+            "datatype": "bit",
+            "length": 1,
+            "with_null": false
+        },
+        {
+            "column_name": "BIT_WITH_NULL",
             "datatype": "bit",
             "length": 1,
             "with_null": true
         },
-        "BIT_WITH_NULL": {
-            "datatype": "bit",
-            "length": 1,
-            "with_null": false
-        },
-        "BOOL_WITHOUT_NULL": {
+        {
+            "column_name": "BOOL_WITHOUT_NULL",
             "datatype": "bool",
             "length": 1,
             "with_null": true
         },
-        "BOOL_WITH_NULL": {
+        {
+            "column_name": "BOOL_WITH_NULL",
             "datatype": "bool",
             "length": 1,
-            "with_null": false
-        },
-        "INT_WITHOUT_NULL": {
-            "datatype": "int",
-            "length": 8,
             "with_null": true
         },
-        "INT_WITH_NULL": {
+        {
+            "column_name": "INT_WITHOUT_NULL",
             "datatype": "int",
             "length": 8,
             "with_null": false
         },
-        "DATETIME_WITHOUT_NULL": {
+        {
+            "column_name": "INT_WITH_NULL",
+            "datatype": "int",
+            "length": 8,
+            "with_null": true
+        },
+        {
+            "column_name": "DATETIME_WITHOUT_NULL",
+            "datatype": "datetime",
+            "length": 1,
+            "with_null": false
+        },
+        {
+            "column_name": "DATETIME_WITH_NULL",
             "datatype": "datetime",
             "length": 1,
             "with_null": true
         },
-        "DATETIME_WITH_NULL": {
-            "datatype": "datetime",
+        {
+            "column_name": "DATETIME2_WITHOUT_NULL",
+            "datatype": "datetime2",
             "length": 1,
             "with_null": false
         },
-        "DATETIME2_WITHOUT_NULL": {
+        {
+            "column_name": "DATETIME2_WITH_NULL",
             "datatype": "datetime2",
             "length": 1,
             "with_null": true
-        },
-        "DATETIME2_WITH_NULL": {
-            "datatype": "datetime2",
-            "length": 1,
-            "with_null": false
         }
-    },
-    "SMALL_TEST": {
-        "COLUMN1": {
+    ],
+    "SMALL_TEST": [
+        {
+            "column_name": "COLUMN1",
             "datatype": "nvarchar",
             "length": 4,
             "with_null": false
         },
-        "COLUMN2": {
+        {
+            "column_name": "COLUMN2",
             "datatype": "nvarchar",
             "length": 4,
             "with_null": false
         }
-    },
-    "INT_4_CHARACTERS": {
-        "COLUMN1": {
+    ],
+    "INT_4_CHARACTERS": [
+        {
+            "column_name": "COLUMN1",
             "datatype": "int",
             "length" : 4,
             "with_null" : false
         },
-        "COLUMN2": {
+        {
+            "column_name": "COLUMN2",
             "datatype": "int",
             "length" : 4,
             "with_null" : false
         }
-    }
+    ]
 }
