@@ -10,7 +10,7 @@ class TestUtilities(ut.TestCase):
         self.assertTrue(contained_in_expected_output in test_filepath)
 
     def test_get_resource_filepath_nonexistant_resource(self):
-        test_file = 'ThisResourceDoesNotexist'
+        test_file = 'ThisResourceDoesNotExist'
         with self.assertRaises(ValueError):
             utilities.get_resource_filepath(test_file)
 

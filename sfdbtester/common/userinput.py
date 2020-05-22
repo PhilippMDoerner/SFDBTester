@@ -125,7 +125,7 @@ def request_filepath(input_message):
             print("No path provided. Exiting file-reading process...")
             break
 
-        elif not os.path.isfile(file_path):
+        if not os.path.isfile(file_path):
             print(f"{file_path} is not a valid filepath.")
             continue
 

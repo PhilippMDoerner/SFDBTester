@@ -1,9 +1,10 @@
+"""This module checks SFDBContainer objects for various properties, such as whether it has duplicates, has correct
+format or whether all of the values in their columns correspond to the columsn expected SQL datatype. Further it
+contains log methods to write the result of the checks into a log-file."""
 import logging
 import re
 
 import numpy as np
-
-from sfdbtester.sfdb.sfdb import SFDBContainer
 
 MAX_DIGITS = 10
 INDEX_SHIFT = 6  # The shift between an (machine) entry index and a (human) line index of that entry in the sfdb file
@@ -178,7 +179,7 @@ def log_datatype_check(non_conform_lines):
         logging.info('    No issues.')
         return
 
-    logging.info('    ' + (' ' * MAX_DIGITS) + 'Line-index | Column | Issue             | Entry')
+    logging.info(f'    % Line-index | Column | Issue             | Entry', (' ' * MAX_DIGITS))
     for (i, column_index, content_line, has_illegal_null, entry_not_match, length) in non_conform_lines:
         i += INDEX_SHIFT
         if has_illegal_null:
@@ -296,7 +297,7 @@ def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_li
 
 def _list_to_string(input_list):
     """Turns a list into a more easily human readable string"""
-    if type(input_list) == np.ndarray:
+    if isinstance(input_list, np.ndarray):
         input_list = input_list.astype(str)
     return '   '.join(input_list)
 
@@ -382,11 +383,11 @@ def _compare_line(new_line, old_line, i_ex_col_new, i_ex_col_old):
     i = 0
     j = 0
     while i < len(new_line) and j < len(old_line):
-        if i_ex_col_new is not [] and i in i_ex_col_new:
+        if not i_ex_col_new == [] and i in i_ex_col_new:
             i += 1
             continue
 
-        if i_ex_col_old is not [] and j in i_ex_col_old:
+        if not i_ex_col_old == [] and j in i_ex_col_old:
             j += 1
             continue
 

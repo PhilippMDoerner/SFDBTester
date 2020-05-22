@@ -9,7 +9,8 @@ def get_resource_filepath(resource_name):
 
     if not os.path.exists(file_path):
         raise ValueError(f'{file_path} does not exist!')
-    elif not os.path.isfile(file_path):
+
+    if not os.path.isfile(file_path):
         raise ValueError(f'{file_path} is not a file!')
 
     return str(file_path)

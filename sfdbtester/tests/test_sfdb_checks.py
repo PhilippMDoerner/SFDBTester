@@ -6,7 +6,7 @@ import numpy as np
 from sfdbtester.common.utilities import get_resource_filepath
 from sfdbtester.sfdb import sfdb
 from sfdbtester.sfdb import sfdb_checks as sc
-from sfdbtester.sfdb.sql_table_schema import  SQLTableSchema
+from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 from sfdbtester.tests.test_sfdb import create_test_sfdbcontainer
 
 

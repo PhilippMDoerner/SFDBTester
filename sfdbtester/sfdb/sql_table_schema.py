@@ -1,3 +1,6 @@
+"""This module defines the requirements an SQL Table, that already exists, has of the SFDB. The already existing tables
+need to be manually recorded in the sfdb_schemas.json resource. If there is no existing SQL table, then the
+SQLTableSchema is mostly pointless."""
 import re
 import json
 from collections import namedtuple
@@ -10,7 +13,9 @@ class ColumnError(Exception):
 
 class SQLTableSchema:
     """Part of an SFDB object. Defines the datatypes of the individual columns of an sfdb and the associated conditions
-    entries need to fulfill. Datatypes are SQL datatypes."""
+    entries need to fulfill. Datatypes are SQL datatypes. All already known/defined Tables are written in the
+    sfdb_schemas.json resource. These defined requirements can then be used by checks to see whether all entries in
+    the SFDB fulfill them."""
     sfdb_schema_file = get_resource_filepath('sfdb_schemas.json')
 
     def __init__(self, sql_table_name):
@@ -24,6 +29,7 @@ class SQLTableSchema:
 
     @columns.setter
     def columns(self, column_object_list):
+        """Sets the list of column properties."""
         self.column_properties = column_object_list
 
     def __len__(self):
@@ -48,10 +54,12 @@ class SQLTableSchema:
         known_sfdb_schemas = SQLTableSchema._get_known_sfdb_schemas()
         if self.table_name in known_sfdb_schemas:
             return known_sfdb_schemas[self.table_name]
+        return None
 
     @classmethod
     def _get_known_sfdb_schemas(cls):
-        """Reads in the provided SFDB schemas and returns them as dictionary"""
+        """Reads in the SFDB schemas of all known tables provided by the sfdb_schemas.json resource and returns them as
+        dictionary"""
         with open(cls.sfdb_schema_file, mode='r') as schema_file:
             sfdb_schemas = json.load(schema_file)
 

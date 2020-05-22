@@ -1,5 +1,7 @@
-"""This defines an sfdb object as SFDBContainer and stores it as numpy arrays for quick access and comparison.
-Can read and write SFDB files as well"""
+"""This module is designed to simplify dealing with SFDBs and improve the performance of accessing and comparing SFDBs.
+Each SFDB (smartFix Database) file represents a table. It has 5 header-lines that determine the tables name, the number
+of columns and the name of each column. Every line that follows is an entry in the database, a line of tab-separated
+values."""
 import os
 from functools import lru_cache
 
@@ -9,10 +11,15 @@ from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
 class NotSFDBFileError(Exception):
+    """This custom error is to be raised when a function/method that expects an SFDB file as parameter receives
+    something else instead."""
     pass
 
 
 class SFDBContainer:
+    """This class is designed to contain the content of sfdb (smartFix-Datbases) files. It splits database-entries
+    into numpy-arrays for faster access. Further it has an SQLTableSchemas that tells you which datatypes an SQL table,
+    that you might upload this file to, would expect and enforce."""
     i_table_name_line = 2
     i_column_line = 3
     i_header_end = 5
@@ -23,6 +30,7 @@ class SFDBContainer:
         self.schema = SQLTableSchema(self.name)
 
     def __create_sfdb_table(self):
+        """Generates a 2D numpy array of all entries in an SFDB file. Ignores the SFDB-file header."""
         content_lines = self.sfdb_lines[type(self).i_header_end:]
         return np.array([line.split('\t') for line in content_lines])
 
@@ -52,6 +60,7 @@ class SFDBContainer:
         return self.content[::-1]
 
     def __add__(self, other_sfdb):
+        """Add 2 SFDBs with identical headers together by appending the entries of one to the other"""
         if self._is_sfdb(other_sfdb) and self.header == other_sfdb.header:
             added_content_lines = other_sfdb.sfdb_lines[type(self).i_header_end:]
             return SFDBContainer(other_sfdb.sfdb_lines + added_content_lines)
@@ -87,6 +96,7 @@ class SFDBContainer:
 
     @classmethod
     def from_file(cls, sfdb_file_path):
+        """Creates an SFDBContainer out of the contents of the passed file"""
         sfdb_lines = cls.read_sfdb_from_file(sfdb_file_path)
         return cls(sfdb_lines)
 
@@ -130,6 +140,14 @@ class SFDBContainer:
 
     @staticmethod
     def _is_sfdb(sfdb_object):
+        """Checks whether the given object represents an SFDB file. This can be either an SFDBContainer object or a list
+        of strings from reading in an SFDB file. This test requires the SFDB format to be correct.
+
+        Parameters:
+            sfdb_object: Any object.
+        Returns:
+            boolean: True if the object does represent an SFDB, false if it does not or the SFDB is faulty.
+        """
         if isinstance(sfdb_object, list):
             sfdb_line_list = sfdb_object
             has_min_length = (len(sfdb_line_list) >= 5)
