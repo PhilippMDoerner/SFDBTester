@@ -213,17 +213,17 @@ def log_datatype_check(non_conform_lines):
         return
 
     column1 = f'{"Line":>12}'
-    column2 = f'{"Column":<25}'
+    column2 = f'{"Column_index - Column":<25}'
     column3 = f'{"Warning":<55}'
     column4 = f'{"Faulty Value":<20}'
     column5 = 'Entry'
     logging.info(f' {column1} | {column2} | {column3} | {column4} | {column5}')
 
-    for entry_index, column_name, entry, faulty_value, error_msg in non_conform_lines:
+    for entry_index, column_string, entry, faulty_value, error_msg in non_conform_lines:
         line_index = entry_index + INDEX_SHIFT
 
         value1 = f'{line_index:>{len(column1)}}'
-        value2 = f'{column_name:<{len(column2)}}'
+        value2 = f'{column_string:<{len(column2)}}'
         value3 = f'{error_msg:<{len(column3)}}'
         value4 = f'{faulty_value:<20}'
         content_string = _list_to_string(entry)
@@ -270,8 +270,9 @@ def check_datatype_conformity(sfdb):
 
             if _is_non_conform_with_column(cell_value, column, regex_pattern):
                 line = sfdb.sfdb_lines[entry_index + INDEX_SHIFT - 1]
+                column_representation = f'{column_index:>2}-{column.name}'
                 error_msg = _get_datatype_error_message(cell_value, column, regex_pattern)
-                list_of_issues.append((entry_index, column.name, line, cell_value, error_msg))
+                list_of_issues.append((entry_index, column_representation, line, cell_value, error_msg))
 
     return list_of_issues
 
@@ -439,7 +440,8 @@ def _compare_line(new_line, old_line, i_ex_col_new, i_ex_col_old):
     """
     if not len(new_line) - len(i_ex_col_new) == len(old_line) - len(i_ex_col_old):
         raise ComparisonError(f'Can not compare SFDB lines with unequal number of values!\n'
-                              f'Line new: {new_line}\nLine old: {old_line}\n'
+                              f'# Line new: {len(new_line)}\n'
+                              f'# Line old: {len(old_line)}\n'
                               f'Excluded Columns 1: {i_ex_col_new}\n'
                               f'Excluded Columns 2: {i_ex_col_old}')
 

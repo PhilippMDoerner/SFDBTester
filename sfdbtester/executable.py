@@ -27,7 +27,7 @@ def configurate_logger(log_filepath):
 
 def create_log_filepath(sfdb_filename):
     now = f'{datetime.now():%y-%m-%d_%H%M%S}'
-    log_filepath = f'{sfdb_filename[:-5]}_{now}_log.txt'
+    log_filepath = f'{sfdb_filename[:-5]}_{now}.log'
     return log_filepath
 
 
