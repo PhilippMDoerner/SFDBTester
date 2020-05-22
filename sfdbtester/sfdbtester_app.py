@@ -6,14 +6,6 @@ from sfdbtester.sfdb.sfdb import SFDBContainer
 from sfdbtester.common.sfdb_logging import LOGFILE_LEVEL, create_log_filepath, configurate_logger
 
 
-def execute_check(check_name, check_func, log_func, check_func_args, log_func_args):
-    logging.log(LOGFILE_LEVEL, f'STARTING {check_name} FORMAT TEST')
-    faulty_lines = check_func(check_func_args)
-    log_func(log_func_args)
-    logging.log(LOGFILE_LEVEL, f'FINISHED {check_name} FORMAT TEST\n')
-    return len(faulty_lines)
-
-
 def run():
     args = get_args()
 
@@ -35,7 +27,7 @@ def run():
     sc.log_sfdb_content_format_check(len(sfdb_new.columns), wrong_format_lines)
     logging.log(LOGFILE_LEVEL, 'FINISHED CONTENT FORMAT TEST\n')
 
-    # Run tests that crash SFDB file have format issues
+    # Run tests that crash if SFDB file has format issues
     if not wrong_format_lines:
         logging.log(LOGFILE_LEVEL, 'STARTING EXCEL AUTOFORMATTING TEST')
         formatted_cells_list = sc.check_excel_autoformatting(sfdb_new)
@@ -76,8 +68,8 @@ def run():
             sfdb_new.write(no_dupl_sfdb_file, sort=args.sorted, remove_duplicates=True)
 
     else:
-        logging.log(LOGFILE_LEVEL, 'No further tests were carried out due to the format issues.\n'
-                                   'Please run this software again after fixing them.')
+        logging.info('Only format tests were carried out due to the format issues.\n'
+                     'Please run this software again after fixing them.')
 
     # Finish logging
     logging.log(LOGFILE_LEVEL, 'Done')
