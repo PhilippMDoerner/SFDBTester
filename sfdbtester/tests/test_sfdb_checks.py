@@ -90,10 +90,10 @@ class TestSFDBTests(ut.TestCase):
         faulty_lines = sc.check_datatype_conformity(test_sfdb)
 
         error_msg = 'Entry too long with 5 chars! Allowed length is 4!'
-        expected_output = [(0, ' 0-COLUMN1', '12345\t56789', '12345', error_msg),
-                           (1, ' 0-COLUMN1', '12345\t34567', '12345', error_msg),
-                           (0, ' 1-COLUMN2', '12345\t56789', '56789', error_msg),
-                           (1, ' 1-COLUMN2', '12345\t34567', '34567', error_msg)]
+        expected_output = [(0, ' 1-COLUMN1', '12345\t56789', '12345', error_msg),
+                           (1, ' 1-COLUMN1', '12345\t34567', '12345', error_msg),
+                           (0, ' 2-COLUMN2', '12345\t56789', '56789', error_msg),
+                           (1, ' 2-COLUMN2', '12345\t34567', '34567', error_msg)]
         self.assertEqual(expected_output, faulty_lines)
 
     def test_check_datatype_conformity_without_datatype_conformity_string_for_int(self):
@@ -104,10 +104,10 @@ class TestSFDBTests(ut.TestCase):
         faulty_lines = sc.check_datatype_conformity(test_sfdb)
 
         error_msg = 'Mismatch to SQL datatype-pattern ^\\d{1,4}$!'
-        expected_output = [(0, ' 0-COLUMN1', 'abcd\tefgh', 'abcd', error_msg),
-                           (1, ' 0-COLUMN1', 'ijkl\tmnop', 'ijkl', error_msg),
-                           (0, ' 1-COLUMN2', 'abcd\tefgh', 'efgh', error_msg),
-                           (1, ' 1-COLUMN2', 'ijkl\tmnop', 'mnop', error_msg)]
+        expected_output = [(0, ' 1-COLUMN1', 'abcd\tefgh', 'abcd', error_msg),
+                           (1, ' 1-COLUMN1', 'ijkl\tmnop', 'ijkl', error_msg),
+                           (0, ' 2-COLUMN2', 'abcd\tefgh', 'efgh', error_msg),
+                           (1, ' 2-COLUMN2', 'ijkl\tmnop', 'mnop', error_msg)]
         self.assertEqual(expected_output, faulty_lines)
 
     def test_check_content_against_regex_all_lines_match(self):

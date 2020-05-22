@@ -270,7 +270,7 @@ def check_datatype_conformity(sfdb):
 
             if _is_non_conform_with_column(cell_value, column, regex_pattern):
                 line = sfdb.sfdb_lines[entry_index + INDEX_SHIFT - 1]
-                column_representation = f'{column_index:>2}-{column.name}'
+                column_representation = f'{column_index + 1:>2}-{column.name}'
                 error_msg = _get_datatype_error_message(cell_value, column, regex_pattern)
                 list_of_issues.append((entry_index, column_representation, line, cell_value, error_msg))
 

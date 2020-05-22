@@ -3,22 +3,28 @@ import os
 import re
 from sfdbtester.common import userinput as ui
 
+# TODO: Change the way the regex flag works. It shall accept pairs of 2 arguments - a column name and a regular
+#  expression (check for them being valid inputs accordingly). It shall then be checked for each column whether every
+#  value in that column conforms to that regular expression.
 
-def exclusion_index(arg):
+# TODO: Unit-test argparse
+
+
+def exclusion_index(i):
     """Checks whether an index is a valid line-index of an entry in an SFDB file. Line indices start at 1. As SFDB
     headers take up the first 5 lines, the smallest allowed index is 6"""
-    arg = int(arg)
-    if arg <= 0:
-        raise argparse.ArgumentTypeError(f"The index {arg} is invalid ! Negative Indices are not allowed!")
-    if 0 < arg <= 5:
-        raise argparse.ArgumentTypeError(f"The index {arg} is invalid ! Index must be larger than 5")
-    return arg
+    i = int(i)
+    if i <= 0:
+        raise argparse.ArgumentTypeError(f"The index {i} is invalid ! Negative Indices are not allowed!")
+    if 0 < i <= 5:
+        raise argparse.ArgumentTypeError(f"The index {i} is invalid ! Index must be larger than 5")
+    return i
 
 
 def filepath(arg):
     """Checks whether the filepath provided as argument leads to an actual file."""
     if not os.path.isfile(arg):
-        argparse.ArgumentTypeError(f'The file {arg} does not exist!')
+        raise argparse.ArgumentTypeError(f'The file {arg} does not exist!')
     else:
         return arg
 
@@ -67,30 +73,31 @@ def request_missing_args(partial_args):
     from the user. """
     # Request -re Regex
     if partial_args.re is None:
-        partial_args.re = ui.request_regex_pattern("Please enter a regular expression matching SFDB lines (optional):"
-                                                   "\n")
+        partial_args.re = ui.request_regex_pattern("Enter a regular expression matching SFDB lines (optional):\n")
+
     # Request -c Filepath
     if partial_args.comparison_sfdb is None:
         partial_args.comparison_sfdb = ui.request_filepath('Path to old SFDB file for comparison tests (optional):\n')
+
     # Request -x1 exclusion row indices
     if partial_args.ex_lines1 is None and partial_args.comparison_sfdb is not None:
-        input_message = ("\tPlease enter the indices of all lines in the old SFDB "
-                         "(starting from 1) that were removed, separated by "
-                         "spaces (optional):\n\t")
+        input_message = ("\tEnter a space-separated list of the indices of all lines in the old SFDB (starting from 1) "
+                         "that were removed (optional):\n"
+                         "\t")
         cmd_args.ex_lines1 = ui.request_list_of_int(input_message, min_value=6)
 
     # Request -x2 eclusion row indices
     if partial_args.ex_lines2 is None and partial_args.comparison_sfdb is not None:
-        input_message = ("\tPlease enter the indices of all lines in the new SFDB "
-                         "(starting from 1) that were added, separated by spaces"
-                         " (optional):\n\t")
+        input_message = ("\tEnter a space-separated list of the indices of all lines in the new SFDB (starting from 1) "
+                         "that were added, separated by spaces (optional):\n"
+                         "\t")
         partial_args.ex_lines2 = ui.request_list_of_int(input_message, min_value=6)
 
     # Request -xc eclusion column names
     if partial_args.ex_col is None and partial_args.comparison_sfdb is not None:
-        input_message = ('\tPlease enter the name of all columns you wish to '
-                         'ignore for the comparison, separated by spaces '
-                         '(optional):\n\t')
+        input_message = ('\tEnter a space-separated list of the name of the columns you wish to ignore for the '
+                         'comparison (optional):\n'
+                         '\t')
         partial_args.ex_col = input(input_message).split()
 
     return partial_args
