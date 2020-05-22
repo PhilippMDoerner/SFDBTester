@@ -9,6 +9,8 @@ import numpy as np
 
 from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
+# TODO: Go through methods and apply consistent naming for lines and entries
+
 
 class NotSFDBFileError(Exception):
     """This custom error is to be raised when a function/method that expects an SFDB file as parameter receives

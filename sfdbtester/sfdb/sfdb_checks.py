@@ -6,8 +6,9 @@ import re
 
 import numpy as np
 
-MAX_DIGITS = 10
-INDEX_SHIFT = 6  # The shift between an (machine) entry index and a (human) line index of that entry in the sfdb file
+from sfdbtester.common.sfdb_logging import LOGFILE_LEVEL
+
+INDEX_SHIFT = 5+1  # The shift between an (machine) entry index and a (human) line index of that entry in the sfdb file
 
 # TODO: Move all logging calls that you can that are in the "check" functions out of there into other parts of the code
 
@@ -25,19 +26,19 @@ def log_sfdb_content_format_check(column_count, faulty_lines):
         Nothing
     """
     if len(faulty_lines) == 0:
-        logging.info('    No issues.')
+        logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
     column1 = f'{"Line":>12}'
     column2 = '# Values'
     column3 = 'Entry'
-    logging.info(f'    Required number of values: {column_count}\n'
-                 f' {column1} | {column2} | {column3}')
+    logging.log(LOGFILE_LEVEL, f'    Required number of values: {column_count}\n'
+                               f' {column1} | {column2} | {column3}')
 
     for i, line in faulty_lines:
         value1 = f'{i + INDEX_SHIFT:>{len(column1)}}'
         value2 = f'{len(line):<{len(column2)}}'
-        logging.info(f' {value1} | {value2} | {line}')
+        logging.log(LOGFILE_LEVEL, f' {value1} | {value2} | {line}')
 
 
 def check_content_format(sfdb):
@@ -66,18 +67,18 @@ def log_excel_autoformatting_check(formatted_cells_list):
         Nothing
     """
     if len(formatted_cells_list) == 0:
-        logging.info('    No issues.')
+        logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
     column1 = f'{"Line":>12}'
     column2 = 'Entry'
     table_header = f' {column1} | {column2}'
-    logging.info(table_header)
+    logging.log(LOGFILE_LEVEL, table_header)
 
     for i_row, i_col, line in formatted_cells_list:
         value1 = f'{i_row + INDEX_SHIFT:>{len(column1)}}'
         value2 = _list_to_string(line)
-        logging.info(f' {value1} | \'{value2}\'')
+        logging.log(LOGFILE_LEVEL, f' {value1} | \'{value2}\'')
 
 
 def check_excel_autoformatting(sfdb):
@@ -112,13 +113,13 @@ def log_duplicates_check(duplicates_list):
         Nothing
     """
     if len(duplicates_list) == 0:
-        logging.info('    No issues.')
+        logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
     column1 = f'{"Line":>12}'
     column2 = 'Duplicate Indices'
     column3 = 'Entry'
-    logging.info(f' {column1} | {column2} | {column3}')
+    logging.log(LOGFILE_LEVEL, f' {column1} | {column2} | {column3}')
 
     for indices, line in duplicates_list:
         indices = [i + INDEX_SHIFT for i in indices]
@@ -128,7 +129,7 @@ def log_duplicates_check(duplicates_list):
         value2_len = _get_duplicate_table_string_length(duplicate_index_string)
         value2 = f'{duplicate_index_string:<{value2_len}}'
 
-        logging.info(f' {value1} | {value2} | \'{line}\'')
+        logging.log(LOGFILE_LEVEL, f' {value1} | {value2} | \'{line}\'')
 
 
 def _get_duplicate_table_string_length(entry_string):
@@ -158,19 +159,19 @@ def log_regex_check(non_regex_lines, regex_pattern):
         Nothing
     """
     if len(non_regex_lines) == 0:
-        logging.info('    No issues.')
+        logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
-    logging.info(f'    Regex: \"{str(regex_pattern)[12:-2]}\":')
+    logging.log(LOGFILE_LEVEL, f'    Regex: \"{str(regex_pattern)[12:-2]}\":')
 
     column1 = f'{"Line":<12}'
     column2 = 'Entry'
-    logging.info(f' {column1} | {column2}')
+    logging.log(LOGFILE_LEVEL, f' {column1} | {column2}')
 
     for i, line in non_regex_lines:
         value1 = f'{i + INDEX_SHIFT:>{len(column1)}}'
         value2 = _list_to_string(line)
-        logging.info(f' {value1} | \'{value2}\'')
+        logging.log(LOGFILE_LEVEL, f' {value1} | \'{value2}\'')
 
 
 def check_content_against_regex(sfdb, regex_pattern):
@@ -205,11 +206,11 @@ def log_datatype_check(non_conform_lines):
         Nothing
     """
     if non_conform_lines is None:
-        logging.info('    No Column Definitions found. Test skipped')
+        logging.log(LOGFILE_LEVEL, '    No Column Definitions found. Test skipped')
         return
 
     elif len(non_conform_lines) == 0:
-        logging.info('    No issues.')
+        logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
     column1 = f'{"Line":>12}'
@@ -217,7 +218,7 @@ def log_datatype_check(non_conform_lines):
     column3 = f'{"Warning":<55}'
     column4 = f'{"Faulty Value":<20}'
     column5 = 'Entry'
-    logging.info(f' {column1} | {column2} | {column3} | {column4} | {column5}')
+    logging.log(LOGFILE_LEVEL, f' {column1} | {column2} | {column3} | {column4} | {column5}')
 
     for entry_index, column_string, entry, faulty_value, error_msg in non_conform_lines:
         line_index = entry_index + INDEX_SHIFT
@@ -228,7 +229,7 @@ def log_datatype_check(non_conform_lines):
         value4 = f'{faulty_value:<20}'
         content_string = _list_to_string(entry)
 
-        logging.info(f' {value1} | {value2} | {value3} | {value4} | \'{content_string}\'')
+        logging.log(LOGFILE_LEVEL, f' {value1} | {value2} | {value3} | {value4} | \'{content_string}\'')
 
 
 def check_datatype_conformity(sfdb):
@@ -262,7 +263,7 @@ def check_datatype_conformity(sfdb):
         regex_pattern = sfdb.schema.get_datatype_regex_pattern(column_name)
 
         if regex_pattern is None:  # if datatype is not known to function, skip comparison
-            logging.info(f'    Skipped comparison! {column_name} has unknown datatype {column.datatype}.')
+            logging.log(LOGFILE_LEVEL, f'    Skipped comparison! {column_name} has unknown datatype {column.datatype}.')
             continue
 
         for entry_index, entry in enumerate(sfdb.content):
@@ -303,22 +304,24 @@ def _get_datatype_error_message(entry, column, column_pattern):
 
 def log_sfdb_comparison(diverging_lines):
     if diverging_lines is None:
-        logging.info('     Comparison Test Skipped. Files did not have equal lengths with the given lines excluded.')
+        log_message = '     Comparison Test Skipped. Files did not have equal lengths with the given lines excluded.'
+        logging.log(LOGFILE_LEVEL, log_message)
         return
 
     elif len(diverging_lines) == 0:
-        logging.info('    No issues.')
+        logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
-    column1 = f'{"Index":>21}'
-    column2 = 'Entry'
-    logging.info(f' {column1} | {column2}')
+    column1 = '   Linetype'
+    column2 = f'{"Index":<8}'
+    column3 = 'Entry'
+    logging.log(LOGFILE_LEVEL, f' {column1} | {column2} | {column3}')
 
     for i_new, line_new, i_old, line_old in diverging_lines:
-        index1 = f'{i_old + INDEX_SHIFT:>{len(column1)}}'
-        index2 = f'{i_new + INDEX_SHIFT:>{len(column1)}}'
-        logging.info(f'    Old line {index1}: \'{line_old}\'\n'
-                     f'    New line {index2}: \'{line_new}\'')
+        value_old = f'{i_old + INDEX_SHIFT:>{len(column2)}}'
+        value_new = f'{i_new + INDEX_SHIFT:>{len(column2)}}'
+        logging.log(LOGFILE_LEVEL, f' {f"Old":>{len(column1)}} | {value_old} | \'{line_old}\'\n'
+                                   f' {f"New":>{len(column1)}} | {value_new} | \'{line_new}\'\n')
 
 
 def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_lines_old=(), excluded_columns=()):
@@ -338,9 +341,9 @@ def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_li
     Returns:
         int: Number of warnings raised.
     """
-    logging.info(f'    Excluded lines in Old? {excluded_lines_old}')
-    logging.info(f'    Excluded lines in New? {excluded_lines_new}')
-    logging.info(f'    Excluded columns?      {excluded_columns}')
+    logging.log(LOGFILE_LEVEL, f'    Excluded lines in Old? {excluded_lines_old}')
+    logging.log(LOGFILE_LEVEL, f'    Excluded lines in New? {excluded_lines_new}')
+    logging.log(LOGFILE_LEVEL, f'    Excluded columns?      {excluded_columns}')
 
     # Change indices from (start at 1) to (start at 0)
     if excluded_lines_new is not None:
@@ -349,7 +352,7 @@ def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_li
         excluded_lines_old = [i - INDEX_SHIFT for i in excluded_lines_old]
 
     if not sfdb_new.name == sfdb_old.name:
-        logging.info('    !DEVIATION WARNING! SQL Tables do not have the same name.')
+        logging.log(LOGFILE_LEVEL, '    !WARNING! Could not compare SQL Tables with different names!')
 
     deviating_lines = _compare_sfdb_lines(sfdb_new, sfdb_old, excluded_lines_new, excluded_lines_old, excluded_columns)
     return deviating_lines

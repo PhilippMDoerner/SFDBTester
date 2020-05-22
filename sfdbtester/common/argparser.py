@@ -42,15 +42,15 @@ def get_args():
     parser = argparse.ArgumentParser(description='Test SFDB files for errors')
     parser.add_argument('SFDBFile', type=filepath,
                         help='Filepath to the SFDB file')
-    parser.add_argument('-re', type=regex,
+    parser.add_argument('-re', '--regular_expression', type=regex,
                         help='Regular Expression to check the SFDB file')
     parser.add_argument('-c',  '--comparison_sfdb', type=filepath,
                         help='Filepath to a second SFDB file to compare to the first')
     parser.add_argument('-x1', '--ex_lines1', default=[], type=exclusion_index, nargs='+',
-                        help='Indices of lines in first SFDB file to exclude from comparison with second SFDB file. '
+                        help='Indices of lines in new SFDB file to exclude from comparison with second SFDB file. '
                                'Header lines can not be excluded, thus the minimum index is 6.')
     parser.add_argument('-x2', '--ex_lines2', default=[], type=exclusion_index, nargs='+',
-                        help='Indices of lines in second SFDB file to exclude from comparison with first SFDB file. '
+                        help='Indices of lines in old SFDB file to exclude from comparison with first SFDB file. '
                                'Header lines can not be excluded, thus the minimum index is 6.')
     parser.add_argument('-xc', '--ex_col', default=[], type=str, nargs='+',
                         help='Names of columns occurring in first or second SFDB file to exclude from their '
