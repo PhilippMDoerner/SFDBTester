@@ -3,32 +3,30 @@ import os
 
 
 def request_regex_pattern(input_message):
-    """Requests a regular expression from user and creates a Pattern
+    """Requests a regular expression from user and creates an SRE_Pattern
     object that ignores case sensitivity.
 
-    Repeats request if input is not valid, specifying what part of the
-    previous input was incorrect. Does not repeat if nothing is entered.
+    Repeats request if input is not valid. Does not repeat if nothing is entered.
 
     Parameters:
-        input_message (string): A terminal message showing what input is needed.
+        input_message (string): A terminal message to display before entry request.
     Returns:
-        Pattern: The regular expression input by the user.
+        regex_pattern (SRE_Pattern): The regular expression input by the user.
     """
     regex_pattern = None
-    valid_input = False
-    while not valid_input:
+    while True:
         regex = input(input_message)
+
         if not regex:
             print("No Regex provided.")
             break
 
         try:
             regex_pattern = re.compile(regex, re.IGNORECASE)
+            break
         except re.error:
             print("The input was not valid regular expression")
             continue
-        else:
-            valid_input = True
 
     return regex_pattern
 
@@ -37,9 +35,7 @@ def request_list_of_int(input_message, min_value=None, max_value=None):
     """Requests a space separated list of integers from the user
     Repeats request if input is not valid, specifying what part of the
     previous input was incorrect. Does not repeat if nothing is entered."""
-    int_list = None
-    valid_input = False
-    while not valid_input:
+    while True:
         int_list = input(input_message).split()
         if not int_list:
             print("No list of numbers provided.")
@@ -48,7 +44,7 @@ def request_list_of_int(input_message, min_value=None, max_value=None):
         non_int_input = [i for i in int_list if not __represents_int(i)]
         if non_int_input:
             list_string = _list_to_string(non_int_input)
-            print(f"!WARNING! The following entries are not numbers :\n{list_string}")
+            print(f"!WARNING! The following entries are not integers :\n{list_string}")
             continue
 
         int_list = [int(i) for i in int_list]
@@ -56,19 +52,17 @@ def request_list_of_int(input_message, min_value=None, max_value=None):
             below_min_int = [i for i in int_list if i < min_value]
             if below_min_int:
                 list_string = _list_to_string(below_min_int)
-                print(f"!WARNING! The following entries are below the allowed "
-                      f"minimum of {min_value}:\n{list_string}")
+                print(f"!WARNING! The following entries are below the allowed minimum of {min_value}:\n{list_string}")
                 continue
 
         if max_value is not None:
             above_max_int = [i for i in int_list if i > max_value]
             if above_max_int:
                 list_string = _list_to_string(above_max_int)
-                print(f"!WARNING! The following entries are above the allowed "
-                      f"maximum of {max_value} :\n{list_string}")
+                print(f"!WARNING! The following entries are above the allowed maximum of {max_value} :\n{list_string}")
                 continue
 
-        valid_input = True
+        break
     return int_list
 
 
@@ -83,9 +77,7 @@ def request_items_of_list(input_message, target_list):
         target_list (list): List of strings. Any input item must occur in this
                                     list or target_list2.
     """
-    item_list = None
-    valid_input = False
-    while not valid_input:
+    while True:
         item_list = input(input_message).split()
         if not item_list:
             print("No item provided.")
@@ -94,11 +86,10 @@ def request_items_of_list(input_message, target_list):
         non_item_input = [item for item in item_list if item not in target_list]
         if non_item_input:
             list_str = _list_to_string(non_item_input)
-            print(f"!WARNING! The following entries are not in the list of "
-                  f"possible items:\n{list_str}")
+            print(f"!WARNING! The following entries are not in the list of possible items:\n{list_str}")
             continue
 
-        valid_input = True
+        break
     return item_list
 
 
@@ -116,7 +107,7 @@ def _list_to_string(input_list):
     return str(input_list).translate(str.maketrans({'[': '', ']': '', '\'': '', '\"': '', ',': ' '}))
 
 
-def request_file_path(input_message):
+def request_filepath(input_message):
     """Requests a filepath from the user.
     Repeats request if user input is not a valid filepath. Does not loop
     if input is empty, '', 'q', 'exit', 'stop' or 'esc'.
@@ -126,15 +117,17 @@ def request_file_path(input_message):
         string: A valid path to an SFDB file.
         None: When user does not provide a filepath.
     """
-    string_is_file_path = False
-    while not string_is_file_path:
+    while True:
         file_path = input(input_message)
-        string_is_file_path = os.path.isfile(file_path)
+
         user_forces_exit = file_path.lower() in ['', 'q', 'exit', 'stop', 'esc']
         if user_forces_exit:
             print("No path provided. Exiting file-reading process...")
             break
-        elif not string_is_file_path:
-            print(file_path + " is not a valid path.")
 
+        elif not os.path.isfile(file_path):
+            print(f"{file_path} is not a valid filepath.")
+            continue
+
+        break
     return file_path

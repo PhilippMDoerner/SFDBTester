@@ -64,7 +64,7 @@ def request_missing_args(cmd_args):
         cmd_args.re = ui.request_regex_pattern("Please enter a regular expression matching SFDB lines (optional):\n")
     # Request -c Filepath
     if cmd_args.comparison_sfdb is None:
-        cmd_args.comparison_sfdb = ui.request_file_path('Path to old SFDB file for comparison tests (optional):\n')
+        cmd_args.comparison_sfdb = ui.request_filepath('Path to old SFDB file for comparison tests (optional):\n')
     # Request -x1 exclusion row indices
     if cmd_args.ex_lines1 is None and cmd_args.comparison_sfdb is not None:
         input_message = ("\tPlease enter the indices of all lines in the old SFDB "
