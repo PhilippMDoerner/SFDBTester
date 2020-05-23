@@ -248,6 +248,6 @@ class SFDBContainer:
         return duplicate_list
 
 
-def entry_to_line(entry): # TODO: Unit test this
+def entry_to_line(entry):
     """Turns a table entry, a sequence of values (list / ndarray) into a the sequences string representation"""
     return '\t'.join(entry)

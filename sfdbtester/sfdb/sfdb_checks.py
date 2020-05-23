@@ -12,6 +12,7 @@ from sfdbtester.sfdb.sfdb import entry_to_line
 INDEX_SHIFT = 5+1  # The shift between an (machine) entry index and a (human) line index of that entry in the sfdb file
 
 # TODO: Move all logging calls that you can that are in the "check" functions out of there into other parts of the code
+
 # TODO: Amend all commit messages to better represent the project
 
 

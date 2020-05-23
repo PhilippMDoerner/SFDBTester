@@ -4,13 +4,20 @@ import numpy as np
 
 from sfdbtester.common.utilities import get_resource_filepath
 from sfdbtester.sfdb.sfdb import SFDBContainer, NotSFDBFileError
+from sfdbtester.sfdb import sfdb
 from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
 
 
-def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),  # TODO: Fix this function to adjust column numbers based on number of input entries and vice versa
+def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),
                               entries=(('val1', 'val2'), ('val3', 'val4')),
                               schema=None):
     """Creates an SFDBContainer object for testing"""
+    num_values = len(entries[0])
+    if not num_values == len(columns):
+        max_len = max(num_values, len(columns))
+        columns = [f'COLUMN{i+1}' for i in range(max_len)] if len(columns) < max_len else columns
+        entries = [(f'val{i+1}', f'val{i+2}') for i in range (max_len)] if len(entries) < max_len else entries
+
     columns = '\t'.join(columns)
     header = ['ENCODING UTF8',
               'INIT',
@@ -307,6 +314,15 @@ class TestSFDBContainer(ut.TestCase):
         np.testing.assert_array_equal(expected_output[0][1], output[0][1])
         np.testing.assert_array_equal(expected_output[1][0], output[1][0])
         np.testing.assert_array_equal(expected_output[1][1], output[1][1])
+
+    def test_entry_to_line_string_array(self):
+        test_sfdb = create_test_sfdbcontainer()
+        test_entry = test_sfdb[0]
+
+        test_line = sfdb.entry_to_line(test_entry)
+
+        expected_output = 'val1\tval2'
+        self.assertEqual(expected_output, test_line)
 
 
 if __name__ == '__main__':

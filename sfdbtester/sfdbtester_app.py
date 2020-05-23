@@ -7,6 +7,7 @@ from sfdbtester.common.sfdb_logging import LOGFILE_LEVEL, create_log_filepath, c
 
 # TODO: For GUI - make a button that opens a window that allows adding, editing and deleting of SFDB schemas
 
+
 def run():
     args = ap.parse_args(sys.argv[1:])
     if args.request:
