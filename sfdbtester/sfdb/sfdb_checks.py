@@ -7,25 +7,27 @@ import re
 import numpy as np
 
 from sfdbtester.common.sfdb_logging import LOGFILE_LEVEL
+from sfdbtester.sfdb.sfdb import entry_to_line
 
 INDEX_SHIFT = 5+1  # The shift between an (machine) entry index and a (human) line index of that entry in the sfdb file
 
 # TODO: Move all logging calls that you can that are in the "check" functions out of there into other parts of the code
+# TODO: Amend all commit messages to better represent the project
 
 
 class ComparisonError(Exception):
     pass
 
 
-def log_sfdb_content_format_check(column_count, faulty_lines):
+def log_sfdb_content_format_check(column_count, faulty_entries):
     """Logs the result of a check of an sfdb's content format.
     Parameters:
         column_count (int): The number of columns in the sfdb and thus the number of values each entry must have.
-        faulty_lines(list(int, string)): The lines with incorrect format and their indices.
+        faulty_entries(list(int, string)): The entries with incorrect format and their indices.
     Returns:
         Nothing
     """
-    if len(faulty_lines) == 0:
+    if len(faulty_entries) == 0:
         logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
@@ -35,34 +37,34 @@ def log_sfdb_content_format_check(column_count, faulty_lines):
     logging.log(LOGFILE_LEVEL, f'    Required number of values: {column_count}\n'
                                f' {column1} | {column2} | {column3}')
 
-    for i, line in faulty_lines:
-        value1 = f'{i + INDEX_SHIFT:>{len(column1)}}'
-        value2 = f'{len(line):<{len(column2)}}'
-        logging.log(LOGFILE_LEVEL, f' {value1} | {value2} | {line}')
+    for entry_index, entry in faulty_entries:
+        line_index = f'{entry_index + INDEX_SHIFT:>{len(column1)}}'
+        value_count = f'{len(entry):<{len(column2)}}'
+        line = entry_to_line(entry)
+
+        logging.log(LOGFILE_LEVEL, f' {line_index} | {value_count} | {line}')
 
 
 def check_content_format(sfdb):
-    """Checks whether each line in the SFDB file that isn't a line of
-        the header has the correct amount of values aka number of cells.
-        Each line must have as many cells as there are columns specified
-        in the header.
+    """Checks whether each entry in the SFDB file has the correct amount
+        of values aka number of cells. Each entry must have as many cells
+        as there are columns specified in the header.
 
     Parameters:
         sfdb (SFDBContainer): The SFDB file.
     Returns:
-        list: List of tuples (i(int), line(string)) containing the index
-            of a line with wrong number of values in the sfdb_line_list as
-            well as the line itself.
+        list: List of tuples (i(int), entry(string)) containing the index
+            of an entry with wrong number of values as well as the entry itself.
     """
     num_columns = len(sfdb.columns)
-    return [(i, line) for i, line in enumerate(sfdb.content) if not len(line) == num_columns]
+    return [(i, entry) for i, entry in enumerate(sfdb.content) if not len(entry) == num_columns]
 
 
 def log_excel_autoformatting_check(formatted_cells_list):
     """Logs the result of a check whether an sfdb had entries with signs of excel autoformatting.
     Parameters:
-        formatted_cells_list (list(int, int, string): The lines with excel autoformatting, their indices for entry and
-            affected column
+        formatted_cells_list (list(int, int, string): The entries with excel autoformatting, the entries index and the
+            index of the column with the value displaying excel autoformatting.
     Returns:
         Nothing
     """
@@ -75,10 +77,10 @@ def log_excel_autoformatting_check(formatted_cells_list):
     table_header = f' {column1} | {column2}'
     logging.log(LOGFILE_LEVEL, table_header)
 
-    for i_row, i_col, line in formatted_cells_list:
-        value1 = f'{i_row + INDEX_SHIFT:>{len(column1)}}'
-        value2 = _list_to_string(line)
-        logging.log(LOGFILE_LEVEL, f' {value1} | \'{value2}\'')
+    for i_entry, i_col, entry in formatted_cells_list:
+        line_index = f'{i_entry + INDEX_SHIFT:>{len(column1)}}'
+        line = entry_to_line(entry)
+        logging.log(LOGFILE_LEVEL, f' {line_index} | \'{line}\'')
 
 
 def check_excel_autoformatting(sfdb):
@@ -89,26 +91,28 @@ def check_excel_autoformatting(sfdb):
     Parameters:
         sfdb (SFDBContainer): The SFDB file.
     Returns:
-        list: List of tuples (i (int),j (int), line(str)).
-                i: index of line of value with excel-format warning
-                j: index of column of value with excel-format warning
-                line : The line with the value with excel-format warning.
+        list: List of tuples (i (int),j (int), entry(str)).
+                i: index of an entry with a value displaying excel autoformatting
+                j: index of the entry's column with the value displaying excel autoformatting
+                entry : The entry with the value that displaying excel autoformatting
     """
-    content_lines = sfdb.content
+    entries = sfdb.content
     excel_formatted_cells = []
-    for i, line in enumerate(content_lines):
-        for j, column in enumerate(line):
+    for i, entry in enumerate(entries):
+
+        for j, column in enumerate(entry):
             cell_value = str(column)
             if re.search(r'\dE\+\d', cell_value) is not None:
-                excel_formatted_cells.append((i, j, line))
+                excel_formatted_cells.append((i, j, entry))
+
     return excel_formatted_cells
 
 
 def log_duplicates_check(duplicates_list):
-    """Logs the result of a check whether an sfdb had a duplicates.
+    """Logs the result of a check whether an sfdb had any duplicate entries.
     Parameters:
-        duplicates_list (list(list(int), string)): A list of indices that share an identical line as well as the
-            line itself.
+        duplicates_list (list(list(int), string)): A list of indices that share an identical entry as well as the
+            entry itself.
     Returns:
         Nothing
     """
@@ -117,34 +121,29 @@ def log_duplicates_check(duplicates_list):
         return
 
     column1 = f'{"Line":>12}'
-    column2 = 'Duplicate Indices'
+    column2 = 'Duplicate Lines'
     column3 = 'Entry'
     logging.log(LOGFILE_LEVEL, f' {column1} | {column2} | {column3}')
 
-    for indices, line in duplicates_list:
-        indices = [i + INDEX_SHIFT for i in indices]
-        value1 = f'{indices[0]:>{len(column1)}}'
+    for entry_indices, entry in duplicates_list:
+        line_indices = [i + INDEX_SHIFT for i in entry_indices]
+        first_index = f'{line_indices[0]:>{len(column1)}}'
 
-        duplicate_index_string = _list_to_string(indices[1:])
-        value2_len = _get_duplicate_table_string_length(duplicate_index_string)
-        value2 = f'{duplicate_index_string:<{value2_len}}'
+        duplicate_indices_string = str(line_indices[1:])[1:-1]
+        other_occurrences = f'{duplicate_indices_string:<{len(column2)}}'
 
-        logging.log(LOGFILE_LEVEL, f' {value1} | {value2} | \'{line}\'')
+        line = entry_to_line(entry)
 
-
-def _get_duplicate_table_string_length(entry_string):
-    header_length = len('Duplicate Indices')
-    entry_string_length = header_length if len(entry_string) < header_length else len(entry_string)
-    return entry_string_length
+        logging.log(LOGFILE_LEVEL, f' {first_index} | {other_occurrences} | \'{line}\'')
 
 
 def check_for_duplicates(sfdb):
-    """Checks whether an SFDB file has duplicate lines.
-
+    """Checks whether an SFDB file has duplicate entries.
     Parameters:
         sfdb (SFDBContainer): The SFDB file.
     Returns:
-        list (list(int), str) : List of indices with identical entries and the entry itself. Line-indices start from 0.
+        list (list(int), str) : List of entry-indices with identical entries and the entry itself. 
+            Entry-indices start from 0.
     """
     return sfdb.get_duplicates()
 
@@ -169,9 +168,8 @@ def log_regex_check(non_regex_lines, regex_pattern):
     logging.log(LOGFILE_LEVEL, f' {column1} | {column2}')
 
     for i, line in non_regex_lines:
-        value1 = f'{i + INDEX_SHIFT:>{len(column1)}}'
-        value2 = _list_to_string(line)
-        logging.log(LOGFILE_LEVEL, f' {value1} | \'{value2}\'')
+        line_index = f'{i + INDEX_SHIFT:>{len(column1)}}'
+        logging.log(LOGFILE_LEVEL, f' {line_index} | \'{line}\'')
 
 
 def check_content_against_regex(sfdb, regex_pattern):
@@ -198,61 +196,51 @@ def check_content_against_regex(sfdb, regex_pattern):
     return lines_without_regex
 
 
-def log_datatype_check(non_conform_lines):
+def log_datatype_check(non_conform_entries):
     """Logs the result of a check whether an sfdb had a valid header
     Parameters:
-        non_conform_lines (): A list of entries where 1 or more values did not conform with their column's datatype.
+        non_conform_entries (): A list of entries where 1 or more values did not conform with their column's datatype.
     Returns:
         Nothing
     """
-    if non_conform_lines is None:
+    if non_conform_entries is None:
         logging.log(LOGFILE_LEVEL, '    No Column Definitions found. Test skipped')
         return
 
-    elif len(non_conform_lines) == 0:
+    elif len(non_conform_entries) == 0:
         logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
     column1 = f'{"Line":>12}'
     column2 = f'{"Column_index - Column":<25}'
-    column3 = f'{"Warning":<55}'
+    column3 = f'{"Error Message":<60}'
     column4 = f'{"Faulty Value":<20}'
     column5 = 'Entry'
     logging.log(LOGFILE_LEVEL, f' {column1} | {column2} | {column3} | {column4} | {column5}')
 
-    for entry_index, column_string, entry, faulty_value, error_msg in non_conform_lines:
-        line_index = entry_index + INDEX_SHIFT
+    for entry_index, column_string, entry, faulty_value, error_msg in non_conform_entries:
+        line_index = f'{entry_index + INDEX_SHIFT:>{len(column1)}}'
+        column = f'{column_string:<{len(column2)}}'
+        error_string = f'{error_msg:<{len(column3)}}'
+        value = f'{faulty_value:<20}'
+        line = entry_to_line(entry)
 
-        value1 = f'{line_index:>{len(column1)}}'
-        value2 = f'{column_string:<{len(column2)}}'
-        value3 = f'{error_msg:<{len(column3)}}'
-        value4 = f'{faulty_value:<20}'
-        content_string = _list_to_string(entry)
-
-        logging.log(LOGFILE_LEVEL, f' {value1} | {value2} | {value3} | {value4} | \'{content_string}\'')
+        logging.log(LOGFILE_LEVEL, f' {line_index} | {column} | {error_string} | {value} | \'{line}\'')
 
 
 def check_datatype_conformity(sfdb):
     """Tests whether all values/cells in an SFDB file are in accordance
-    with the datatype of the values column in the corresponding SQL
-    table.
+    with their assigned SQL datatype in the corresponding SQL table.
 
     Parameters:
         sfdb (SFDBContainer): The SFDB file
     Returns:
-        list: A list of tuples (line_index (int), column_index (int),
-            content_line(string), has_illegal_null (bool),
-            entry_not_match (bool), length (int)).
-            line_index: The index of the line where the datatype warning
-                occurred
-            column_index: The index of the column where the datatype
-                warning occurred
-            has_illegal_null: True if warning was caused by null in a
-                column that does not allow null values.
-            entry_not_match: True if warning was caused by an entry not
-                matching the datatype or being too long for the column.
-            length: The amount of characters allowed in the column that
-                caused the warning.
+        list: A list of tuples (entry_index (int), column_string (str), entry(np.ndarray), cell_value, error_msg (str)).
+            entry_index: The index of the entry that has a faulty value
+            column_string: A string representation of the column that has a faulty value. Includes the column's index.
+            entry: An SFDBContainer entry, thus a 1 dimensional numpy ndarray
+            cell_value: The faulty cell value. Is either int or str
+            error_msg: An error message explaining why the cell_value is faulty.
     """
     if not sfdb.has_schema():
         return None
@@ -270,16 +258,16 @@ def check_datatype_conformity(sfdb):
             cell_value = entry[column_index]
 
             if _is_non_conform_with_column(cell_value, column, regex_pattern):
-                line = sfdb.sfdb_lines[entry_index + INDEX_SHIFT - 1]
-                column_representation = f'{column_index + 1:>2}-{column.name}'
+                column_string = f'{column_index + 1:>2}-{column.name}'
                 error_msg = _get_datatype_error_message(cell_value, column, regex_pattern)
-                list_of_issues.append((entry_index, column_representation, line, cell_value, error_msg))
+
+                list_of_issues.append((entry_index, column_string, entry, cell_value, error_msg))
 
     return list_of_issues
 
 
 def _is_non_conform_with_column(entry, column, column_pattern):
-    """Determines whether an entry is conform with a column's datatype"""
+    """Determines whether an entry is conform with a column's datatype or not."""
     has_illegal_null = not column.with_null and entry == ''
     entry_too_long = len(entry) > column.length
     entry_not_match = column_pattern.search(entry) is None
@@ -297,14 +285,14 @@ def _get_datatype_error_message(entry, column, column_pattern):
     elif entry_too_long:
         return f"Entry too long with {len(entry)} chars! Allowed length is {column.length}!"
     elif entry_not_match:
-        return f"Mismatch to SQL datatype-pattern {column_pattern.pattern}!"
+        return f"Mismatch to SQL datatype-pattern \'{column_pattern.pattern}\'!"
     else:
         return "Unknown Error"
 
 
 def log_sfdb_comparison(diverging_lines):
     if diverging_lines is None:
-        log_message = '     Comparison Test Skipped. Files did not have equal lengths with the given lines excluded.'
+        log_message = '    Comparison Test Skipped. Files did not have equal lengths with the given lines excluded.'
         logging.log(LOGFILE_LEVEL, log_message)
         return
 
@@ -317,20 +305,21 @@ def log_sfdb_comparison(diverging_lines):
     column3 = 'Entry'
     logging.log(LOGFILE_LEVEL, f' {column1} | {column2} | {column3}')
 
-    for i_new, line_new, i_old, line_old in diverging_lines:
-        value_old = f'{i_old + INDEX_SHIFT:>{len(column2)}}'
-        value_new = f'{i_new + INDEX_SHIFT:>{len(column2)}}'
-        logging.log(LOGFILE_LEVEL, f' {f"Old":>{len(column1)}} | {value_old} | \'{line_old}\'\n'
-                                   f' {f"New":>{len(column1)}} | {value_new} | \'{line_new}\'\n')
+    for i_new, entry_new, i_old, entry_old in diverging_lines:
+        line_index_old = f'{i_old + INDEX_SHIFT:>{len(column2)}}'
+        line_new = entry_to_line(entry_new)
+        line_index_new = f'{i_new + INDEX_SHIFT:>{len(column2)}}'
+        line_old = entry_to_line(entry_old)
+
+        logging.log(LOGFILE_LEVEL, f' {f"Old":>{len(column1)}} | {line_index_old} | \'{line_old}\'\n'
+                                   f' {f"New":>{len(column1)}} | {line_index_new} | \'{line_new}\'\n')
 
 
 def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_lines_old=(), excluded_columns=()):
     """Checks whether the lines of 2 SFDB files are identical after
-    exclusion of specific lines and columns.
+    exclusion of added/deleted lines and columns.
 
-    Excluded lines and columns are specified via user-input. All lines
-    that aren't identical cause a warning. All warnings are logged and
-    the number of warnings returned.
+    Excluded lines and columns are specified via user-input. 
 
     Parameters:
         sfdb_new (SFDBContainer): The updated version of an SFDB file.
@@ -345,121 +334,112 @@ def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_li
     logging.log(LOGFILE_LEVEL, f'    Excluded lines in New? {excluded_lines_new}')
     logging.log(LOGFILE_LEVEL, f'    Excluded columns?      {excluded_columns}')
 
-    # Change indices from (start at 1) to (start at 0)
-    if excluded_lines_new is not None:
-        excluded_lines_new = [i - INDEX_SHIFT for i in excluded_lines_new]
-    if excluded_lines_old is not None:
-        excluded_lines_old = [i - INDEX_SHIFT for i in excluded_lines_old]
+    # Change indices from (start at 6) to (start at 0)
+    excluded_entries_new = [] if excluded_lines_new is None else \
+        set([line_index - INDEX_SHIFT for line_index in excluded_lines_new])
+
+    excluded_entries_old = [] if excluded_lines_new is None else \
+        set([line_index - INDEX_SHIFT for line_index in excluded_lines_old])
 
     if not sfdb_new.name == sfdb_old.name:
-        logging.log(LOGFILE_LEVEL, '    !WARNING! Could not compare SQL Tables with different names!')
+        logging.log(LOGFILE_LEVEL, '    !WARNING! SQL Tables have different names!')
 
-    deviating_lines = _compare_sfdb_lines(sfdb_new, sfdb_old, excluded_lines_new, excluded_lines_old, excluded_columns)
+    deviating_lines = _compare_sfdb_lines(sfdb_new,
+                                          sfdb_old,
+                                          excluded_entries_new,
+                                          excluded_entries_old,
+                                          excluded_columns)
     return deviating_lines
 
 
-def _list_to_string(input_list):
-    """Turns a list into a more easily human readable string"""
-    if isinstance(input_list, np.ndarray):
-        input_list = input_list.astype(str)
-    elif isinstance(input_list, str):
-        return input_list
-    else:
-        input_list = [str(item) for item in input_list]
-    return '   '.join(input_list)
+def _compare_sfdb_lines(sfdb_new, sfdb_old, i_ex_entries_new, i_ex_entries_old, excluded_columns):
+    """Checks whether the lines of 2 SFDB files are identical after exclusion of specific lines and columns.
 
-
-def _compare_sfdb_lines(sfdb_new, sfdb_old, i_ex_lines_new, i_ex_lines_old, excluded_columns):
-    """Checks whether the lines of 2 SFDB files are identical after
-    exclusion of specific lines and columns.
-
-    Compares SFDB header and content separately, as column-exclusion
-    only matters for the SFDB's content.
-    Raises a ComparisonError if the SFDB files don't have identical
-    numbers of lines after exclusion of the specified lines.
-    Loops over SFDB content and first checks every iteration whether
-    a line in sfdb_new or sfdb_old must be skipped.
+    Compares SFDB header and content separately. Raises a ComparisonError if the SFDB files don't have identical
+    numbers of lines after exclusion of the specified lines. Loops over SFDB content and first checks every
+    iteration whether a line in sfdb_new or sfdb_old must be skipped.
 
     Parameters:
         sfdb_new (SFDBContainer): The updated version of an SFDB file.
         sfdb_old (SFDBContainer): The previous version of an SFDB file.
-        i_ex_lines_new (list): List of int. Line-indices to be excluded from sfdb_new
-        i_ex_lines_old (list): List of int. Line-indices to be excluded from sfdb_old
+        i_ex_entries_new (set): Set of int. Entry-indices to be excluded from sfdb_new
+        i_ex_entries_old (set): Set of int. Entry-indices to be excluded from sfdb_old
         excluded_columns (list): List of strings. Names columns to be
             excluded from both sfdb files.
     Returns:
-        list: List of tuples (i (int), j (int)).
+        list: List of tuples (i (int), new_entry(np.ndarray), j (int), old_entry(np.ndarray).
                 i: Index of deviating line in sfdb_new
+                new_entry: Numpy ndarray of strings. The entry in the sfdb_new.
                 j: Index of deviating line in sfdb_old
+                new_entry: Numpy ndarray of strings. The entry in the sfdb_old.
     """
-    if not len(sfdb_new) - len(i_ex_lines_new) == len(sfdb_old) - len(i_ex_lines_old):
+    if not len(sfdb_new) - len(i_ex_entries_new) == len(sfdb_old) - len(i_ex_entries_old):
         raise ComparisonError('Can not compare SFDB files with unequal number of lines!')
 
     i_ex_col_new = []
     i_ex_col_old = []
     if excluded_columns is not None:
-        i_ex_col_new = [sfdb_new.columns.index(col) for col in excluded_columns if col in sfdb_new.columns]
-        i_ex_col_old = [sfdb_old.columns.index(col) for col in excluded_columns if col in sfdb_old.columns]
-    deviating_lines = [(i, sfdb_new.header[i], i, sfdb_old.header[i]) for i in range(len(sfdb_new.header))
+        i_ex_col_new = [sfdb_new.columns.index(col) for col in excluded_columns]
+        i_ex_col_old = [sfdb_old.columns.index(col) for col in excluded_columns]
+
+    deviating_lines = [(i - INDEX_SHIFT, sfdb_new.header[i], i - INDEX_SHIFT, sfdb_old.header[i])
+                       for i in range(len(sfdb_new.header))
                        if not sfdb_new.header[i] == sfdb_old.header[i]]
 
     i = 0
     j = 0
     while i in range(len(sfdb_new)) and j in range(len(sfdb_old)):
-        if i in i_ex_lines_new:
+        if i in i_ex_entries_new:
             i += 1
             continue
 
-        if j in i_ex_lines_old:
+        if j in i_ex_entries_old:
             j += 1
             continue
 
-        is_equal = _compare_line(sfdb_new[i], sfdb_old[j], i_ex_col_new, i_ex_col_old)
-        if not is_equal:
-            deviating_lines.append((i, sfdb_new.get_entry_string(i), j, sfdb_old.get_entry_string(j)))
+        if not _are_equal_entries(sfdb_new[i], sfdb_old[j], i_ex_col_new, i_ex_col_old):
+            deviating_lines.append((i, sfdb_new[i], j, sfdb_old[j]))
         i += 1
         j += 1
 
     return deviating_lines
 
 
-def _compare_line(new_line, old_line, i_ex_col_new, i_ex_col_old):
-    """Checks whether 2 lines of different SFDB files are identical or not.
+def _are_equal_entries(entry1, entry2, excluded_indices1, excluded_indices2):
+    """Checks whether 2 entries are identical or not.
 
-    Loops over the values and compares column by column. Checks every
-    iteration first whether a column in the new or the old line must be skipped.
+    Loops over the values and compares value by value. Checks every
+    iteration first whether a value in either line must be skipped.
     Raises a ComparisonError if the lines don't have identical
-    numbers of columns after exclusion of the specified columns.
+    numbers of value after exclusion of the specified values.
 
     Parameters:
-        new_line(list): List of strings. A line from an updated SFDB file.
-        old_line(list): List of strings. A line from the previous SFDB file.
-        i_ex_col_new(list): List of int. Indices of columns in new_line that
-            are excluded from the comparison.
-        i_ex_col_old(list): List of int. Indices of columns in old_line that
-            are excluded from the comparison.
+        entry1(np.ndarray): Numpy ndarray of strings. An entry from an SFDB file.
+        entry2(np.ndarray): Numpy ndarray of strings. An entry from an SFDB file.
+        excluded_indices1(list): List of int. Indices of values in entry1 that are excluded from the comparison.
+        excluded_indices2(list): List of int. Indices of values in entry2 that are excluded from the comparison.
     Returns:
-        bool: True if lines are identical. False if they are not.
+        bool: True if entries are identical. False if they are not.
     """
-    if not len(new_line) - len(i_ex_col_new) == len(old_line) - len(i_ex_col_old):
-        raise ComparisonError(f'Can not compare SFDB lines with unequal number of values!\n'
-                              f'# Line new: {len(new_line)}\n'
-                              f'# Line old: {len(old_line)}\n'
-                              f'Excluded Columns 1: {i_ex_col_new}\n'
-                              f'Excluded Columns 2: {i_ex_col_old}')
+    if not len(entry1) - len(excluded_indices1) == len(entry2) - len(excluded_indices2):
+        raise ComparisonError(f'Can not compare SFDB entries with unequal number of values!\n'
+                              f'# Entry 1 : {len(entry1)}\n'
+                              f'# Entry 2 : {len(entry2)}\n'
+                              f'Excluded Columns 1: {excluded_indices1}\n'
+                              f'Excluded Columns 2: {excluded_indices2}')
 
     i = 0
     j = 0
-    while i < len(new_line) and j < len(old_line):
-        if not i_ex_col_new == [] and i in i_ex_col_new:
+    while i < len(entry1) and j < len(entry2):
+        if not excluded_indices1 == [] and i in excluded_indices1:
             i += 1
             continue
 
-        if not i_ex_col_old == [] and j in i_ex_col_old:
+        if not excluded_indices2 == [] and j in excluded_indices2:
             j += 1
             continue
 
-        if not new_line[i] == old_line[j]:
+        if not entry1[i] == entry2[j]:
             return False
 
         i += 1

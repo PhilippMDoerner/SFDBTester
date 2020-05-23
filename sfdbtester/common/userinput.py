@@ -1,6 +1,9 @@
 import re
 import os
 
+# TODO: Ponder if you should apply logging to all of the request functions, including the one in argparse.
+#  Would get rid of print
+
 
 def request_regex_pattern(input_message):
     """Requests a regular expression from user and creates an SRE_Pattern

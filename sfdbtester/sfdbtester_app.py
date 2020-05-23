@@ -5,6 +5,7 @@ from sfdbtester.common import argparser as ap
 from sfdbtester.sfdb import sfdb_checks as sc
 from sfdbtester.common.sfdb_logging import LOGFILE_LEVEL, create_log_filepath, configurate_logger
 
+# TODO: For GUI - make a button that opens a window that allows adding, editing and deleting of SFDB schemas
 
 def run():
     args = ap.parse_args(sys.argv[1:])
@@ -22,12 +23,12 @@ def run():
 
     # Perform Tests on SFDB file
     logging.log(LOGFILE_LEVEL, 'STARTING CONTENT FORMAT TEST')
-    wrong_format_lines = sc.check_content_format(args.SFDBFile)
-    sc.log_sfdb_content_format_check(len(args.SFDBFile.columns), wrong_format_lines)
+    wrong_format_entries = sc.check_content_format(args.SFDBFile)
+    sc.log_sfdb_content_format_check(len(args.SFDBFile.columns), wrong_format_entries)
     logging.log(LOGFILE_LEVEL, 'FINISHED CONTENT FORMAT TEST\n')
 
     # Run tests that crash if SFDB file has format issues
-    if not wrong_format_lines:
+    if not wrong_format_entries:
         logging.log(LOGFILE_LEVEL, 'STARTING EXCEL AUTOFORMATTING TEST')
         formatted_cells_list = sc.check_excel_autoformatting(args.SFDBFile)
         sc.log_excel_autoformatting_check(formatted_cells_list)
@@ -41,27 +42,27 @@ def run():
         logging.log(LOGFILE_LEVEL, 'FINISHED DUPLICATE TEST\n')
 
         logging.log(LOGFILE_LEVEL, 'STARTING DATATYPE TEST')
-        non_conform_lines = sc.check_datatype_conformity(args.SFDBFile)
-        sc.log_datatype_check(non_conform_lines)
-        warning_counter += 0 if non_conform_lines is None else len(non_conform_lines)
+        non_conform_entries = sc.check_datatype_conformity(args.SFDBFile)
+        sc.log_datatype_check(non_conform_entries)
+        warning_counter += 0 if non_conform_entries is None else len(non_conform_entries)
         logging.log(LOGFILE_LEVEL, 'FINISHED  DATATYPE TEST\n')
 
         if args.regular_expression:
             logging.log(LOGFILE_LEVEL, 'STARTING REGEX TEST')
-            non_regex_lines = sc.check_content_against_regex(args.SFDBFile, args.regular_expression)
-            sc.log_regex_check(non_regex_lines, args.regular_expression)
-            warning_counter += len(non_regex_lines)
+            non_regex_entries = sc.check_content_against_regex(args.SFDBFile, args.regular_expression)
+            sc.log_regex_check(non_regex_entries, args.regular_expression)
+            warning_counter += len(non_regex_entries)
             logging.log(LOGFILE_LEVEL, 'FINISHED REGEX TEST\n')
 
         if args.comparison_sfdb:
             logging.log(LOGFILE_LEVEL, 'STARTING COMPARISON TEST')
-            diverging_lines = sc.check_sfdb_comparison(args.SFDBFile,
+            diverging_entries = sc.check_sfdb_comparison(args.SFDBFile,
                                                        args.comparison_sfdb,
                                                        args.ex_lines1,
                                                        args.ex_lines2,
                                                        args.ex_col)
-            sc.log_sfdb_comparison(diverging_lines)
-            warning_counter += len(diverging_lines)
+            sc.log_sfdb_comparison(diverging_entries)
+            warning_counter += len(diverging_entries)
             logging.log(LOGFILE_LEVEL, 'FINISHED COMPARISON TEST\n')
 
         if args.write:

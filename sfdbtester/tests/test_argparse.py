@@ -6,17 +6,18 @@ from sfdbtester.common.utilities import get_resource_filepath
 
 
 class TestArgParser(ut.TestCase):
+    def setUp(self):
+        self.test_sfdb_filepath = get_resource_filepath('test_duplicates.sfdb')
+
     def test_parse_args_sfdb_filepath_valid(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
-        test_args = [test_sfdb]
+        test_args = [self.test_sfdb_filepath]
 
         args = ap.parse_args(test_args)
 
         self.assertTrue(isinstance(args.SFDBFile, sfdb.SFDBContainer))
 
     def test_parse_args_sfdb_filepath_empty(self):
-        test_sfdb = ''
-        test_args = [test_sfdb]
+        test_args = ['']
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
@@ -48,18 +49,16 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_regex_valid(self):
-        test_filepath = get_resource_filepath('test_duplicates.sfdb')
         test_regex = r'\d\d'
-        test_args = [test_filepath, '-re', test_regex]
+        test_args = [self.test_sfdb_filepath, '-re', test_regex]
 
         args = ap.parse_args(test_args)
 
         self.assertEqual(args.regular_expression, re.compile(test_regex, re.IGNORECASE))
 
     def test_parse_args_regex_invalid(self):
-        test_filepath = get_resource_filepath('test_duplicates.sfdb')
         test_regex = r'\l\d'
-        test_args = [test_filepath, '-re', test_regex]
+        test_args = [self.test_sfdb_filepath, '-re', test_regex]
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
@@ -69,27 +68,24 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_regex_empty(self):
-        test_filepath = get_resource_filepath('test_duplicates.sfdb')
         test_regex = ''
-        test_args = [test_filepath, '-re', test_regex]
+        test_args = [self.test_sfdb_filepath, '-re', test_regex]
 
         args = ap.parse_args(test_args)
 
         self.assertEqual(args.regular_expression, re.compile(test_regex, re.IGNORECASE))
 
     def test_parse_args_valid_comparison_sfdb_filepath(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
-        test_args = [test_sfdb, '-c', comp_sfdb]
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb]
 
         args = ap.parse_args(test_args)
 
         self.assertTrue(isinstance(args.SFDBFile, sfdb.SFDBContainer))
 
     def test_parse_args_empty_comparison_sfdb_filepath(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = ''
-        test_args = [test_sfdb, '-c', comp_sfdb]
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb]
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
@@ -99,9 +95,8 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_invalid_comparison_sfdb_filepath(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = f'{get_resource_filepath("test_duplicates.sfdb")}_ThisMakesFilePathInvalid'
-        test_args = [test_sfdb, '-c', comp_sfdb]
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb]
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
@@ -111,9 +106,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_comparison_sfdb_filepath_is_directory(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath("test_dir")
-        test_args = [test_sfdb, '-c', comp_sfdb]
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb]
+
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
 
@@ -122,10 +117,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines1_valid(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['6', '7', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x1']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x1']
         test_args.extend(test_exclusion_lines)
 
         args = ap.parse_args(test_args)
@@ -134,10 +128,9 @@ class TestArgParser(ut.TestCase):
         self.assertEqual(expected_exclusion_lines, args.ex_lines1)
 
     def test_parse_args_exclusion_lines1_negative_indices(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['-6', '7', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x1']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x1']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -148,10 +141,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines1_header_indices(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['4', '7', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x1']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x1']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -162,10 +154,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines1_strings(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['6', 'NotAnIndex', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x1']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x1']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -176,10 +167,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines1_empty(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x1']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x1']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -191,11 +181,10 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines1_out_of_bounds(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         definitely_out_of_bounds = '15'
         test_exclusion_lines = [definitely_out_of_bounds]
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x1']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x1']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -206,10 +195,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines2_valid(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['6', '7', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x2']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x2']
         test_args.extend(test_exclusion_lines)
 
         args = ap.parse_args(test_args)
@@ -218,10 +206,9 @@ class TestArgParser(ut.TestCase):
         self.assertEqual(expected_exclusion_lines, args.ex_lines2)
 
     def test_parse_args_exclusion_lines2_negative_indices(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['-6', '7', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x2']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x2']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -232,10 +219,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines2_header_indices(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['4', '7', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x2']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x2']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -246,10 +232,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines2_strings(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['6', 'NotAnIndex', '8']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x2']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x2']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -260,10 +245,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_exclusion_lines2_empty(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_exclusion_lines = ['']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-x2']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-x2']
         test_args.extend(test_exclusion_lines)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -275,10 +259,9 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_excluded_columns_1_column(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_excluded_columns = ['COLUMN1']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-xc']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-xc']
         test_args.extend(test_excluded_columns)
 
         args = ap.parse_args(test_args)
@@ -287,10 +270,9 @@ class TestArgParser(ut.TestCase):
         self.assertEqual(expected_output, args.ex_col)
 
     def test_parse_args_excluded_columns_2_columns(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_excluded_columns = ['COLUMN1', 'COLUMN2']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-xc']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-xc']
         test_args.extend(test_excluded_columns)
 
         args = ap.parse_args(test_args)
@@ -299,10 +281,9 @@ class TestArgParser(ut.TestCase):
         self.assertEqual(expected_output, args.ex_col)
 
     def test_parse_args_excluded_columns_invalid_columns(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_excluded_columns = ['COLUMN1', 'NonExistantColumn']
-        test_args = [test_sfdb, '-c', comp_sfdb, '-xc']
+        test_args = [self.test_sfdb_filepath, '-c', comp_sfdb, '-xc']
         test_args.extend(test_excluded_columns)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
@@ -313,9 +294,8 @@ class TestArgParser(ut.TestCase):
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_excluded_columns_no_comp_sfdb(self):
-        test_sfdb = get_resource_filepath('test_duplicates.sfdb')
         test_excluded_columns = ['COLUMN1']
-        test_args = [test_sfdb, '-xc']
+        test_args = [self.test_sfdb_filepath, '-xc']
         test_args.extend(test_excluded_columns)
 
         with self.assertRaises(ap.WrongArgumentError) as cm:

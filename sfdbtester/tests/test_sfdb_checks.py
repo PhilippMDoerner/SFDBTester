@@ -87,28 +87,40 @@ class TestSFDBTests(ut.TestCase):
         test_entries = [['12345', '56789'], ['12345', '34567']]
         test_sfdb = create_test_sfdbcontainer(entries=test_entries)
 
-        faulty_lines = sc.check_datatype_conformity(test_sfdb)
+        faulty_entries = sc.check_datatype_conformity(test_sfdb)
 
         error_msg = 'Entry too long with 5 chars! Allowed length is 4!'
-        expected_output = [(0, ' 1-COLUMN1', '12345\t56789', '12345', error_msg),
-                           (1, ' 1-COLUMN1', '12345\t34567', '12345', error_msg),
-                           (0, ' 2-COLUMN2', '12345\t56789', '56789', error_msg),
-                           (1, ' 2-COLUMN2', '12345\t34567', '34567', error_msg)]
-        self.assertEqual(expected_output, faulty_lines)
+        expected_output = [(0, ' 1-COLUMN1', np.array(['12345', '56789']), '12345', error_msg),
+                           (1, ' 1-COLUMN1', np.array(['12345', '34567']), '12345', error_msg),
+                           (0, ' 2-COLUMN2', np.array(['12345', '56789']), '56789', error_msg),
+                           (1, ' 2-COLUMN2', np.array(['12345', '34567']), '34567', error_msg)]
+
+        for expected_entry, entry in zip(expected_output, faulty_entries):
+            self.assertEqual(expected_entry[0], entry[0])
+            self.assertEqual(expected_entry[0], entry[0])
+            np.testing.assert_array_equal(expected_entry[2], entry[2])
+            self.assertEqual(expected_entry[3], entry[3])
+            self.assertEqual(expected_entry[4], entry[4])
 
     def test_check_datatype_conformity_without_datatype_conformity_string_for_int(self):
         test_entries = [['abcd', 'efgh'], ['ijkl', 'mnop']]
         test_schema = SQLTableSchema('INT_4_CHARACTERS')
         test_sfdb = create_test_sfdbcontainer(entries=test_entries, schema=test_schema)
 
-        faulty_lines = sc.check_datatype_conformity(test_sfdb)
+        faulty_entries = sc.check_datatype_conformity(test_sfdb)
 
-        error_msg = 'Mismatch to SQL datatype-pattern ^\\d{1,4}$!'
-        expected_output = [(0, ' 1-COLUMN1', 'abcd\tefgh', 'abcd', error_msg),
-                           (1, ' 1-COLUMN1', 'ijkl\tmnop', 'ijkl', error_msg),
-                           (0, ' 2-COLUMN2', 'abcd\tefgh', 'efgh', error_msg),
-                           (1, ' 2-COLUMN2', 'ijkl\tmnop', 'mnop', error_msg)]
-        self.assertEqual(expected_output, faulty_lines)
+        error_msg = 'Mismatch to SQL datatype-pattern \'^\\d{1,4}$\'!'
+        expected_output = [(0, ' 1-COLUMN1', np.array(['abcd', 'efgh']), 'abcd', error_msg),
+                           (1, ' 1-COLUMN1', np.array(['ijkl', 'mnop']), 'ijkl', error_msg),
+                           (0, ' 2-COLUMN2', np.array(['abcd', 'efgh']), 'efgh', error_msg),
+                           (1, ' 2-COLUMN2', np.array(['ijkl', 'mnop']), 'mnop', error_msg)]
+
+        for expected_entry, entry in zip(expected_output, faulty_entries):
+            self.assertEqual(expected_entry[0], entry[0])
+            self.assertEqual(expected_entry[0], entry[0])
+            np.testing.assert_array_equal(expected_entry[2], entry[2])
+            self.assertEqual(expected_entry[3], entry[3])
+            self.assertEqual(expected_entry[4], entry[4])
 
     def test_check_content_against_regex_all_lines_match(self):
         test_sfdb = create_test_sfdbcontainer()
@@ -155,10 +167,13 @@ class TestSFDBTests(ut.TestCase):
         sfdb1 = create_test_sfdbcontainer(entries=entries1)
         sfdb2 = create_test_sfdbcontainer(entries=entries2)
 
-        diverging_lines = sc.check_sfdb_comparison(sfdb1, sfdb2)
+        diverging_entries = sc.check_sfdb_comparison(sfdb1, sfdb2)
 
-        expected_output = [(1, '1\t2', 1, '1\t3')]
-        self.assertEqual(expected_output, diverging_lines)
+        expected_output = [(1, np.array(['1', '2']), 1, np.array(['1', '3']))]
+        self.assertEqual(expected_output[0][0], diverging_entries[0][0])
+        np.testing.assert_array_equal(expected_output[0][1], diverging_entries[0][1])
+        self.assertEqual(expected_output[0][2], diverging_entries[0][2])
+        np.testing.assert_array_equal(expected_output[0][3], diverging_entries[0][3])
 
     def test_check_sfdb_comparison_identical_sfdb_1_line_difference_excluded(self):
         entries1 = [['1', '2'], ['1', '2']]

@@ -1,15 +1,25 @@
-"""This module is designed to simplify dealing with SFDBs and improve the performance of accessing and comparing SFDBs.
-Each SFDB (smartFix Database) file represents a table. It has 5 header-lines that determine the tables name, the number
-of columns and the name of each column. Every line that follows is an entry in the database, a line of tab-separated
-values."""
+"""This module is designed to make dealing with SFDBs easier and more performant..
+Each SFDB (smartFix Database) file represents a table. That table has 5 lines of header that determine the tables
+name, the number of columns and the name of each column. Every line that follows is an entry in the database, a line of
+tab-separated values.
+
+This module strictly separates the idea of lines and entries.
+
+A line refers to a line in the SFDB file. In such a case an entire line of tab-separated values is contained within
+a single string. Lines also start at the first (i=0) line in the file, which is a line of the SFDB's header. They are
+the more human-readable indices, as most text-editor programs for SFDBs will display the line-number at the side.
+
+An entry refers to an SFDB entry. It is a non-header line in the SFDB file represented by a numpy array, one cell for
+each value. Entries start at the 5th (i=5) line in the file, as all lines before it are just SFDB header. These are more
+useful for fast comparisons and tests.
+
+For line- and entry-indices the following rule applies: line_index - 5 = entry_index."""
 import os
 from functools import lru_cache
 
 import numpy as np
 
 from sfdbtester.sfdb.sql_table_schema import SQLTableSchema
-
-# TODO: Go through methods and apply consistent naming for lines and entries
 
 
 class NotSFDBFileError(Exception):
@@ -19,9 +29,9 @@ class NotSFDBFileError(Exception):
 
 
 class SFDBContainer:
-    """This class is designed to contain the content of sfdb (smartFix-Datbases) files. It splits database-entries
-    into numpy-arrays for faster access. Further it has an SQLTableSchemas that tells you which datatypes an SQL table,
-    that you might upload this file to, would expect and enforce."""
+    """This class is designed to contain the content of sfdb (smartFix-Datbases) files. It loads database-entries
+    into numpy-arrays for faster access. Further it has an SQLTableSchemas that shows which datatypes an SQL table,
+    that you might upload this file to, would expect and enforce. This requires the SQL table being known beforehand."""
     i_table_name_line = 2
     i_column_line = 3
     i_header_end = 5
@@ -65,8 +75,8 @@ class SFDBContainer:
     def __add__(self, other_sfdb):
         """Add 2 SFDBs with identical headers together by appending the entries of one to the other"""
         if self._is_sfdb(other_sfdb) and self.header == other_sfdb.header:
-            added_content_lines = other_sfdb.sfdb_lines[type(self).i_header_end:]
-            return SFDBContainer(other_sfdb.sfdb_lines + added_content_lines)
+            other_sfdb_content_lines = other_sfdb.sfdb_lines[type(self).i_header_end:]
+            return SFDBContainer(self.sfdb_lines + other_sfdb_content_lines)
         else:
             raise ValueError('You can not add sfdb files with different headers!')
 
@@ -136,7 +146,8 @@ class SFDBContainer:
         """
         sfdb_lines = [line.rstrip('\n') for line in sfdb_stream.readlines()]
 
-        if len(sfdb_lines) > 0 and sfdb_lines[-1] == '':
+        has_entries_and_last_line_empty = len(sfdb_lines) > 0 and sfdb_lines[-1] == ''
+        if has_entries_and_last_line_empty:
             del(sfdb_lines[-1])
 
         return sfdb_lines
@@ -173,19 +184,14 @@ class SFDBContainer:
                              (header[4][0] == 'INSERT')        and (len(header[4]) == 1))
         return is_correct_header
 
-    @staticmethod
-    def _seq_to_sfdb_line(sfdb_sequence):
-        """Turns a list or arrayinto a more easily human readable string"""
-        return '\t'.join(sfdb_sequence)
-
-    def get_entry_string(self, content_index):
+    def get_entry_string(self, entry_index):
         """Returns the string representation of an entry in the SFDB"""
-        if not isinstance(content_index, int):
+        if not isinstance(entry_index, int):
             raise TypeError(f'Index must be an integer!')
-        if content_index < 0:
+        if entry_index < 0:
             raise IndexError(f'Index out of bounds. No negative Indices allowed!')
 
-        return self.sfdb_lines[content_index + self.i_header_end]
+        return self.sfdb_lines[entry_index + self.i_header_end]
 
     def has_schema(self):
         """Checks whether the sfdb file has a functional SQL Table Schema in its SQLTableSchema object"""
@@ -199,16 +205,18 @@ class SFDBContainer:
 
     def _write(self, output_stream, remove_duplicates=False, sort=False):
         """"Writes the sfdb to an IOStream. Records in written file can be sorted and have duplicates filtered out"""
-        for line in self.header:
-            output_stream.write(self._seq_to_sfdb_line(line) + '\n')
+        for header_line in self.header:
+            header_string = entry_to_line(header_line)
+            output_stream.write(f'{header_string}\n')
 
         i_duplicates = self._get_duplicate_index_list()
-        content = np.sort(self.content, axis=0) if sort else self.content
+        entries = np.sort(self.content, axis=0) if sort else self.content
 
-        for i, line in enumerate(content):
+        for i, entry in enumerate(entries):
             if remove_duplicates and i in i_duplicates:
                 continue
-            output_stream.write(self._seq_to_sfdb_line(line) + '\n')
+
+            output_stream.write(entry_to_line(entry) + '\n')
 
     def _get_duplicate_index_list(self):
         """Return a list of the indices all duplicate entries. Does not include the first occurrence of each entry."""
@@ -235,6 +243,11 @@ class SFDBContainer:
         _, inverse_rows = np.unique(rows, return_index=True)
 
         res = np.split(cols, inverse_rows[1:])
-        duplicate_list = [(i, self._seq_to_sfdb_line(self.content[i[0]])) for i in res]
+        duplicate_list = [(i, entry_to_line(self.content[i[0]])) for i in res]
 
         return duplicate_list
+
+
+def entry_to_line(entry): # TODO: Unit test this
+    """Turns a table entry, a sequence of values (list / ndarray) into a the sequences string representation"""
+    return '\t'.join(entry)
