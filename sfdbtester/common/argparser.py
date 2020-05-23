@@ -2,49 +2,79 @@ import argparse
 import os
 import re
 from sfdbtester.common import userinput as ui
+from sfdbtester.sfdb import sfdb
 
 # TODO: Change the way the regex flag works. It shall accept pairs of 2 arguments - a column name and a regular
 #  expression (check for them being valid inputs accordingly). It shall then be checked for each column whether every
 #  value in that column conforms to that regular expression.
 
-# TODO: Unit-test argparse
+
+class WrongArgumentError(Exception):
+    pass
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        # self.print_help(sys.stderr)
+        raise WrongArgumentError(message)
 
 
 def exclusion_index(i):
     """Checks whether an index is a valid line-index of an entry in an SFDB file. Line indices start at 1. As SFDB
     headers take up the first 5 lines, the smallest allowed index is 6"""
-    i = int(i)
+    if i == '':
+        raise WrongArgumentError('argument -x1/ex_lines1 or -x2/ex_lines2: expected an argument, not an empty string')
+
+    try:
+        i = int(i)
+    except ValueError:
+        raise WrongArgumentError(f"argument -x1/--exclusion_index1 or -x2/--exclusion_index2: "
+                                 f"\'{i}\' is not a number!")
+
     if i <= 0:
-        raise argparse.ArgumentTypeError(f"The index {i} is invalid ! Negative Indices are not allowed!")
+        raise WrongArgumentError(f"argument -x1/--exclusion_index1 or -x2/--exclusion_index2: "
+                                 f"The index {i} is invalid ! Negative Indices are not allowed!")
     if 0 < i <= 5:
-        raise argparse.ArgumentTypeError(f"The index {i} is invalid ! Index must be larger than 5")
+        raise WrongArgumentError(f"argument -x1/--exclusion_index1 or -x2/--exclusion_index2: "
+                                 f"The index {i} is invalid ! Index must be larger than 5")
     return i
 
 
-def filepath(arg):
+def sfdb_file(input_filepath):
     """Checks whether the filepath provided as argument leads to an actual file."""
-    if not os.path.isfile(arg):
-        raise argparse.ArgumentTypeError(f'The file {arg} does not exist!')
+    if input_filepath == '':
+        raise WrongArgumentError('argument SFDBFile or -c/--comparison_sfdb: expected one argument')
+
+    elif os.path.isdir(input_filepath):
+        raise WrongArgumentError(f'argument SFDBFile or -c/--comparison_sfdb: '
+                                 f'\'{input_filepath}\' is a directory!')
+
+    elif not os.path.isfile(input_filepath):
+        raise WrongArgumentError(f'argument SFDBFile or -c/--comparison_sfdb: '
+                                 f'The file \'{input_filepath}\' does not exist!')
     else:
-        return arg
+        return sfdb.SFDBContainer.from_file(input_filepath)
 
 
 def regex(arg):
     """Checks whether the regular expression provided as argument is a valid regular expression."""
+    if arg is None:
+        raise WrongArgumentError('argument -re/--regular_expression: expected one argument')
     try:
         regex_pattern = re.compile(arg, re.IGNORECASE)
         return regex_pattern
     except re.error:
-        raise argparse.ArgumentTypeError(f"The expression {arg} is not valid regular expression")
+        raise WrongArgumentError(f"argument -re/--regular_expression: "
+                                 f"\'{arg}\' is not a valid regular expression!")
 
 
-def get_args():
-    parser = argparse.ArgumentParser(description='Test SFDB files for errors')
-    parser.add_argument('SFDBFile', type=filepath,
+def parse_args(args):
+    parser = ArgumentParser(description='Test SFDB files for errors')
+    parser.add_argument('SFDBFile', type=sfdb_file,
                         help='Filepath to the SFDB file')
     parser.add_argument('-re', '--regular_expression', type=regex,
                         help='Regular Expression to check the SFDB file')
-    parser.add_argument('-c',  '--comparison_sfdb', type=filepath,
+    parser.add_argument('-c',  '--comparison_sfdb', type=sfdb_file, default=None,
                         help='Filepath to a second SFDB file to compare to the first')
     parser.add_argument('-x1', '--ex_lines1', default=[], type=exclusion_index, nargs='+',
                         help='Indices of lines in new SFDB file to exclude from comparison with second SFDB file. '
@@ -62,10 +92,37 @@ def get_args():
     parser.add_argument('-r',  '--request', action='store_true',
                         help='If enabled requests command line arguments individually via user-input')
 
-    args = parser.parse_args()
-    if args.request:
-        args = request_missing_args(cmd_args)
-    return args
+    parsed_args = parser.parse_args(args)
+    _check_excluded_line_indices(parsed_args.ex_lines1, parsed_args.SFDBFile)
+    _check_excluded_line_indices(parsed_args.ex_lines2, parsed_args.comparison_sfdb)
+    _check_excluded_columns(parsed_args.ex_col, parsed_args.SFDBFile, parsed_args.comparison_sfdb)
+
+    return parsed_args
+
+
+def _check_excluded_line_indices(index_list_for_sfdb, args_sfdb):
+    if not index_list_for_sfdb:
+        return
+
+    invalid_indices = [i for i in index_list_for_sfdb if i >= len(args_sfdb.sfdb_lines)]
+    if invalid_indices:
+        raise WrongArgumentError(f'argument -x1/--exclusion_index1 or -x2/--exclusion_index2: '
+                                 f'Indices {invalid_indices} are out of bounds for {args_sfdb.name} with '
+                                 f'{len(args_sfdb.sfdb_lines)} lines!')
+
+
+def _check_excluded_columns(excluded_columns, sfdb1, sfdb2):
+    if not excluded_columns:
+        return
+
+    if not sfdb2:
+        raise WrongArgumentError('argument -xc/-ex_col: Can not use argument -xc without argument -c')
+
+    invalid_columns = [col for col in excluded_columns if (col not in sfdb1.columns or col not in sfdb2.columns)]
+    if invalid_columns:
+        raise WrongArgumentError(f'argument -xc/-ex_col: '
+                                 f'Table columns {invalid_columns} are not present in both {sfdb1.name} and '
+                                 f'{sfdb2.name} !')
 
 
 def request_missing_args(partial_args):
@@ -84,7 +141,7 @@ def request_missing_args(partial_args):
         input_message = ("\tEnter a space-separated list of the indices of all lines in the old SFDB (starting from 1) "
                          "that were removed (optional):\n"
                          "\t")
-        cmd_args.ex_lines1 = ui.request_list_of_int(input_message, min_value=6)
+        partial_args.ex_lines1 = ui.request_list_of_int(input_message, min_value=6)
 
     # Request -x2 eclusion row indices
     if partial_args.ex_lines2 is None and partial_args.comparison_sfdb is not None:
@@ -101,10 +158,3 @@ def request_missing_args(partial_args):
         partial_args.ex_col = input(input_message).split()
 
     return partial_args
-
-
-if __name__ == '__main__':
-    cmd_args = get_args()
-    print(cmd_args)
-    for key in cmd_args.__dict__:
-        print(f'{key:<15} : {cmd_args.__dict__[key]}')

@@ -26,10 +26,11 @@ class SFDBContainer:
     i_column_line = 3
     i_header_end = 5
 
-    def __init__(self, sfdb_lines):
+    def __init__(self, sfdb_lines, filepath=''):
         self.sfdb_lines = sfdb_lines
         self.content = self.__create_sfdb_table()
         self.schema = SQLTableSchema(self.name)
+        self.filepath = filepath
 
     def __create_sfdb_table(self):
         """Generates a 2D numpy array of all entries in an SFDB file. Ignores the SFDB-file header."""
@@ -100,7 +101,7 @@ class SFDBContainer:
     def from_file(cls, sfdb_file_path):
         """Creates an SFDBContainer out of the contents of the passed file"""
         sfdb_lines = cls.read_sfdb_from_file(sfdb_file_path)
-        return cls(sfdb_lines)
+        return cls(sfdb_lines, filepath=sfdb_file_path)
 
     @staticmethod
     def read_sfdb_from_file(file_path):
