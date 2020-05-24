@@ -95,11 +95,11 @@ class SFDBContainer:
         entry_string = '\n'.join(self.sfdb_lines[self.i_header_end:])
         return header_string + entry_string
 
-    def __eq__(self, other_sfdb): # TODO: Unit test this
+    def __eq__(self, other_sfdb):
         """Allows for equality comparison between SFDB files."""
         return self.sfdb_lines == other_sfdb.sfdb_lines
 
-    def __hash__(self): # TODO: Unit test this
+    def __hash__(self):
         hash_tuple = (tuple(self.sfdb_lines), self.filepath)
         return hash(hash_tuple)
 

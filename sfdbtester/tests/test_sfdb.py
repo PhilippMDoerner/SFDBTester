@@ -324,6 +324,54 @@ class TestSFDBContainer(ut.TestCase):
         expected_output = 'val1\tval2'
         self.assertEqual(expected_output, test_line)
 
+    def test___eq__equal_sfdbs(self):
+        test_sfdb1 = create_test_sfdbcontainer()
+        test_sfdb2 = create_test_sfdbcontainer()
+        self.assertTrue(test_sfdb1.__eq__(test_sfdb2))
+
+    def test___eq__unequal_sfdbs_differing_entries(self):
+        test_entries1 = [['1', '2'], ['3', '4']]
+        test_entries2 = [['1', '3'], ['3', '4']]
+        test_sfdb1 = create_test_sfdbcontainer(entries=test_entries1)
+        test_sfdb2 = create_test_sfdbcontainer(entries=test_entries2)
+        self.assertFalse( test_sfdb1.__eq__(test_sfdb2))
+
+    def test___eq__equal_sfdbs_differing_filepath(self):
+        test_sfdb1 = create_test_sfdbcontainer()
+        test_sfdb1.filepath = 'A'
+        test_sfdb2 = create_test_sfdbcontainer()
+        test_sfdb2.filepath = 'B'
+        self.assertTrue(test_sfdb1.__eq__(test_sfdb2))
+
+    def test___eq__None(self):
+        test_sfdb = create_test_sfdbcontainer()
+        with self.assertRaises(AttributeError):
+            test_sfdb.__eq__(None)
+
+    def test___eq__string(self):
+        test_sfdb = create_test_sfdbcontainer()
+        with self.assertRaises(ValueError):
+            test_sfdb.__eq__(get_resource_filepath('duplicates_test.sfdb'))
+
+    def test___hash__equal_sfdbs(self):
+        test_sfdb1 = create_test_sfdbcontainer()
+        test_sfdb2 = create_test_sfdbcontainer()
+        self.assertEquals(test_sfdb1.__hash__(), test_sfdb2.__hash__())
+
+    def test___hash__unequal_sfdbs_differing_entries(self):
+        test_entries1 = [['1', '2'], ['3', '4']]
+        test_entries2 = [['1', '3'], ['3', '4']]
+        test_sfdb1 = create_test_sfdbcontainer(entries=test_entries1)
+        test_sfdb2 = create_test_sfdbcontainer(entries=test_entries2)
+        self.assertNotEqual( test_sfdb1.__hash__(), test_sfdb2.__hash__())
+
+    def test___hash__equal_sfdbs_differing_filepath(self):
+        test_sfdb1 = create_test_sfdbcontainer()
+        test_sfdb1.filepath = 'A'
+        test_sfdb2 = create_test_sfdbcontainer()
+        test_sfdb2.filepath = 'B'
+        self.assertNotEqual(test_sfdb1.__hash__(), test_sfdb2.__hash__())
+
 
 if __name__ == '__main__':
     ut.main()
