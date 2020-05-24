@@ -5,12 +5,9 @@ from sfdbtester.common.utilities import get_resource_filepath
 
 LOGFILE_LEVEL = 15
 
-# TODO: Unittest Logging
-
 
 def configurate_logger(log_filepath):
     logging.addLevelName(LOGFILE_LEVEL, 'LOGFILE')
-
     logging.log_filepath = log_filepath
 
     config_file = get_resource_filepath('logging.cfg')

@@ -3,6 +3,7 @@ import unittest as ut
 from unittest import mock
 from sfdbtester.common import userinput as ui
 from sfdbtester.common.utilities import get_resource_filepath
+from sfdbtester.sfdb import sfdb
 
 
 class TestUserInput(ut.TestCase):
@@ -124,6 +125,33 @@ class TestUserInput(ut.TestCase):
         expected_output = get_resource_filepath('empty.sfdb')
         self.assertEqual(expected_output, filepath)
         self.assertTrue(os.path.isfile(filepath))
+
+    @mock.patch('builtins.input', return_value=f"{get_resource_filepath('test_duplicates.sfdb')}")
+    def test_request_sfdb_valid_sfdb_filepath(self, mocked_input):
+        test_sfdb = ui.request_sfdb('')
+
+        test_filepath = get_resource_filepath('test_duplicates.sfdb')
+        expected_output = sfdb.SFDBContainer.from_file(test_filepath)
+
+        self.assertEqual(expected_output, test_sfdb)
+
+    @mock.patch('builtins.input', return_value=f"{get_resource_filepath('empty.sfdb')}")
+    def test_request_sfdb_valid_filepath_to_invalid_sfdb(self, mocked_input):
+        with self.assertRaises(sfdb.NotSFDBFileError):
+            ui.request_sfdb('')
+
+    @mock.patch('builtins.print', side_effect=Exception('Break The Loop!'))
+    @mock.patch('builtins.input', return_value=f"{get_resource_filepath('empty.sfdb')}_invalid_path_addition")
+    def test_request_sfdb_invalid_filepath(self, mocked_input, mocked_print):
+        with self.assertRaises(Exception):
+            ui.request_filepath('')
+        mocked_print.assert_called_with(f"{get_resource_filepath('empty.sfdb')}_invalid_path_addition "
+                                        f"is not a valid filepath.")
+
+    @mock.patch('builtins.input', return_value="")
+    def test_request_sfdb_empty_filepath(self, mocked_input):
+        test_sfdb = ui.request_sfdb('')
+        self.assertIsNone(test_sfdb)
 
 
 if __name__ == '__main__':

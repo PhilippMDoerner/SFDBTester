@@ -1,8 +1,6 @@
 import re
 import os
-
-# TODO: Ponder if you should apply logging to all of the request functions, including the one in argparse.
-#  Would get rid of print
+from sfdbtester.sfdb import sfdb
 
 
 def request_regex_pattern(input_message):
@@ -55,14 +53,16 @@ def request_list_of_int(input_message, min_value=None, max_value=None):
             below_min_int = [i for i in int_list if i < min_value]
             if below_min_int:
                 list_string = _list_to_string(below_min_int)
-                print(f"!WARNING! The following entries are below the allowed minimum of {min_value}:\n{list_string}")
+                print(f"!WARNING! The following entries are below the allowed minimum of {min_value}:\n"
+                      f"{list_string}")
                 continue
 
         if max_value is not None:
             above_max_int = [i for i in int_list if i > max_value]
             if above_max_int:
                 list_string = _list_to_string(above_max_int)
-                print(f"!WARNING! The following entries are above the allowed maximum of {max_value} :\n{list_string}")
+                print(f"!WARNING! The following entries are above the allowed maximum of {max_value} :\n"
+                      f"{list_string}")
                 continue
 
         break
@@ -110,6 +110,23 @@ def _list_to_string(input_list):
     return str(input_list).translate(str.maketrans({'[': '', ']': '', '\'': '', '\"': '', ',': ' '}))
 
 
+def request_sfdb(input_message):
+    """Requests the filepath of an SFDB from the user.
+    Repeats request if user input is not a valid filepath. Does not loop
+    if input is empty, '', 'q', 'exit', 'stop' or 'esc'.
+    Parameters:
+        input_message (string): A terminal message showing what input is needed.
+    Returns:
+        string: A valid path to an SFDB file.
+        None: When user does not provide a filepath.
+    """
+    filepath = request_filepath(input_message)
+    if filepath == "":
+        return
+
+    return sfdb.SFDBContainer.from_file(filepath)
+
+
 def request_filepath(input_message):
     """Requests a filepath from the user.
     Repeats request if user input is not a valid filepath. Does not loop
@@ -117,7 +134,7 @@ def request_filepath(input_message):
     Parameters:
         input_message (string): A terminal message showing what input is needed.
     Returns:
-        string: A valid path to an SFDB file.
+        string: A valid path to a file.
         None: When user does not provide a filepath.
     """
     while True:

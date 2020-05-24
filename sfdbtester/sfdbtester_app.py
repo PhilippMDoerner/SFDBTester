@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 from sfdbtester.common import argparser as ap
 from sfdbtester.sfdb import sfdb_checks as sc
@@ -9,18 +10,20 @@ from sfdbtester.common.sfdb_logging import LOGFILE_LEVEL, create_log_filepath, c
 
 
 def run():
-    args = ap.parse_args(sys.argv[1:])
-    if args.request:
-        args = ap.request_missing_args(args)
-
     # Initialize logging
-    log_filepath = create_log_filepath(args.SFDBFile.filepath)
+    sfdb_path = os.path.abspath(sys.argv[1])
+    log_filepath = create_log_filepath(sfdb_path)
     configurate_logger(log_filepath)
 
-    logging.log(LOGFILE_LEVEL, f'LOG FILE FOR SFDB FILE : {args.SFDBFile}')
+    logging.log(LOGFILE_LEVEL, f'LOG FILE FOR SFDB FILE : {sfdb_path}')
     logging.log(LOGFILE_LEVEL, 'Indices in this log start from 1\n')
 
     warning_counter = 0
+
+    # Receive Arguments
+    args = ap.parse_args(sys.argv[1:])
+    if args.request:
+        args = ap.request_missing_args(args)
 
     # Perform Tests on SFDB file
     logging.log(LOGFILE_LEVEL, 'STARTING CONTENT FORMAT TEST')

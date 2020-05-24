@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+import logging
 from sfdbtester.common import userinput as ui
 from sfdbtester.sfdb import sfdb
 
@@ -129,29 +130,32 @@ def request_missing_args(partial_args):
     """Sees which arguments are logically missing based on the already provided arguments and actively requests them
     from the user. """
     # Request -re Regex
-    if partial_args.re is None:
-        partial_args.re = ui.request_regex_pattern("Enter a regular expression matching SFDB lines (optional):\n")
+    if partial_args.regular_expression is None:
+        partial_args.regular_expression = ui.request_regex_pattern("Enter a regular expression matching "
+                                                                    "SFDB lines (optional):\n")
 
     # Request -c Filepath
     if partial_args.comparison_sfdb is None:
-        partial_args.comparison_sfdb = ui.request_filepath('Path to old SFDB file for comparison tests (optional):\n')
+        partial_args.comparison_sfdb = ui.request_sfdb('Path to old SFDB file for comparison tests (optional):\n')
+    else:
+        logging.info('Path to comparison-SFDB File has already been provided.')
 
     # Request -x1 exclusion row indices
-    if partial_args.ex_lines1 is None and partial_args.comparison_sfdb is not None:
+    if partial_args.ex_lines1 == [] and partial_args.comparison_sfdb:
         input_message = ("\tEnter a space-separated list of the indices of all lines in the old SFDB (starting from 1) "
                          "that were removed (optional):\n"
                          "\t")
         partial_args.ex_lines1 = ui.request_list_of_int(input_message, min_value=6)
 
     # Request -x2 eclusion row indices
-    if partial_args.ex_lines2 is None and partial_args.comparison_sfdb is not None:
+    if partial_args.ex_lines2 == [] and partial_args.comparison_sfdb:
         input_message = ("\tEnter a space-separated list of the indices of all lines in the new SFDB (starting from 1) "
                          "that were added, separated by spaces (optional):\n"
                          "\t")
         partial_args.ex_lines2 = ui.request_list_of_int(input_message, min_value=6)
 
     # Request -xc eclusion column names
-    if partial_args.ex_col is None and partial_args.comparison_sfdb is not None:
+    if partial_args.ex_col == [] and partial_args.comparison_sfdb:
         input_message = ('\tEnter a space-separated list of the name of the columns you wish to ignore for the '
                          'comparison (optional):\n'
                          '\t')

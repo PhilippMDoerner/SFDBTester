@@ -87,8 +87,21 @@ class SFDBContainer:
             return self.__add__(other_sfdb)
 
     def __repr__(self):
-        return f'SFDBContainer of the table {self.name} with columns '\
-               f'{self.columns} and {len(self.content)} entries'
+        """Debug String representation of SFDBContainer. Displays the SFDB's name, columns and all of its entries"""
+        header_string = f'Name:    {self.name}\n' \
+                        f'Columns: {self.columns}\n' \
+                        f'Entries: \n'
+
+        entry_string = '\n'.join(self.sfdb_lines[self.i_header_end:])
+        return header_string + entry_string
+
+    def __eq__(self, other_sfdb): # TODO: Unit test this
+        """Allows for equality comparison between SFDB files."""
+        return self.sfdb_lines == other_sfdb.sfdb_lines
+
+    def __hash__(self): # TODO: Unit test this
+        hash_tuple = (tuple(self.sfdb_lines), self.filepath)
+        return hash(hash_tuple)
 
     @property
     def header(self):
