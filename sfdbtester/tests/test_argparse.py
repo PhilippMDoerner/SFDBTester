@@ -14,7 +14,7 @@ class TestArgParser(ut.TestCase):
 
         args = ap.parse_args(test_args)
 
-        self.assertTrue(isinstance(args.SFDBFile, sfdb.SFDBContainer))
+        self.assertTrue(isinstance(args.sfdb_new, sfdb.SFDBContainer))
 
     def test_parse_args_sfdb_filepath_empty(self):
         test_args = ['']
@@ -23,7 +23,7 @@ class TestArgParser(ut.TestCase):
             ap.parse_args(test_args)
 
         error_message = str(cm.exception)
-        expected_partial_error_message = 'argument SFDBFile or -c/--comparison_sfdb: expected one argument'
+        expected_partial_error_message = 'argument sfdb_new or -c/--comparison_sfdb: expected one argument'
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_sfdb_filepath_invalid(self):
@@ -50,15 +50,17 @@ class TestArgParser(ut.TestCase):
 
     def test_parse_args_regex_valid(self):
         test_regex = r'\d\d'
-        test_args = [self.test_sfdb_filepath, '-re', test_regex]
+        test_column = 'COLUMN1'
+        test_args = [self.test_sfdb_filepath, '-re', test_column, test_regex]
 
         args = ap.parse_args(test_args)
-
-        self.assertEqual(args.regular_expression, re.compile(test_regex, re.IGNORECASE))
+        expected_output = {test_column: re.compile(test_regex)}
+        self.assertEqual(args.column_patterns, expected_output)
 
     def test_parse_args_regex_invalid(self):
         test_regex = r'\l\d'
-        test_args = [self.test_sfdb_filepath, '-re', test_regex]
+        test_column = 'COLUMN1'
+        test_args = [self.test_sfdb_filepath, '-re', test_column, test_regex]
 
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
@@ -69,11 +71,13 @@ class TestArgParser(ut.TestCase):
 
     def test_parse_args_regex_empty(self):
         test_regex = ''
-        test_args = [self.test_sfdb_filepath, '-re', test_regex]
+        test_column = 'COLUMN1'
+        test_args = [self.test_sfdb_filepath, '-re', test_column, test_regex]
 
         args = ap.parse_args(test_args)
 
-        self.assertEqual(args.regular_expression, re.compile(test_regex, re.IGNORECASE))
+        expected_output = {test_column: re.compile(test_regex)}
+        self.assertEqual(args.column_patterns, expected_output)
 
     def test_parse_args_valid_comparison_sfdb_filepath(self):
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
@@ -81,7 +85,7 @@ class TestArgParser(ut.TestCase):
 
         args = ap.parse_args(test_args)
 
-        self.assertTrue(isinstance(args.SFDBFile, sfdb.SFDBContainer))
+        self.assertTrue(isinstance(args.sfdb_new, sfdb.SFDBContainer))
 
     def test_parse_args_empty_comparison_sfdb_filepath(self):
         comp_sfdb = ''
@@ -91,7 +95,7 @@ class TestArgParser(ut.TestCase):
             ap.parse_args(test_args)
 
         error_message = str(cm.exception)
-        expected_partial_error_message = 'argument SFDBFile or -c/--comparison_sfdb: expected one argument'
+        expected_partial_error_message = 'argument sfdb_new or -c/--comparison_sfdb: expected one argument'
         self.assertIn(expected_partial_error_message, error_message)
 
     def test_parse_args_invalid_comparison_sfdb_filepath(self):
@@ -125,7 +129,7 @@ class TestArgParser(ut.TestCase):
         args = ap.parse_args(test_args)
 
         expected_exclusion_lines = [6, 7, 8]
-        self.assertEqual(expected_exclusion_lines, args.ex_lines1)
+        self.assertEqual(expected_exclusion_lines, args.excluded_lines1)
 
     def test_parse_args_exclusion_lines1_negative_indices(self):
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
@@ -176,7 +180,7 @@ class TestArgParser(ut.TestCase):
             ap.parse_args(test_args)
 
         error_message = str(cm.exception)
-        expected_partial_error_message = 'argument -x1/ex_lines1 or -x2/ex_lines2: ' \
+        expected_partial_error_message = 'argument -x1/excluded_lines1 or -x2/excluded_lines2: ' \
                                          'expected an argument, not an empty string'
         self.assertIn(expected_partial_error_message, error_message)
 
@@ -203,7 +207,7 @@ class TestArgParser(ut.TestCase):
         args = ap.parse_args(test_args)
 
         expected_exclusion_lines = [6, 7, 8]
-        self.assertEqual(expected_exclusion_lines, args.ex_lines2)
+        self.assertEqual(expected_exclusion_lines, args.excluded_lines2)
 
     def test_parse_args_exclusion_lines2_negative_indices(self):
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
@@ -254,7 +258,7 @@ class TestArgParser(ut.TestCase):
             ap.parse_args(test_args)
 
         error_message = str(cm.exception)
-        expected_partial_error_message = 'argument -x1/ex_lines1 or -x2/ex_lines2: ' \
+        expected_partial_error_message = 'argument -x1/excluded_lines1 or -x2/excluded_lines2: ' \
                                          'expected an argument, not an empty string'
         self.assertIn(expected_partial_error_message, error_message)
 
@@ -267,7 +271,7 @@ class TestArgParser(ut.TestCase):
         args = ap.parse_args(test_args)
 
         expected_output = test_excluded_columns
-        self.assertEqual(expected_output, args.ex_col)
+        self.assertEqual(expected_output, args.excluded_columns)
 
     def test_parse_args_excluded_columns_2_columns(self):
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
@@ -278,7 +282,7 @@ class TestArgParser(ut.TestCase):
         args = ap.parse_args(test_args)
 
         expected_output = test_excluded_columns
-        self.assertEqual(expected_output, args.ex_col)
+        self.assertEqual(expected_output, args.excluded_columns)
 
     def test_parse_args_excluded_columns_invalid_columns(self):
         comp_sfdb = get_resource_filepath('test_duplicates.sfdb')
@@ -289,7 +293,8 @@ class TestArgParser(ut.TestCase):
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
 
-        expected_partial_error_message = f"argument -xc/-ex_col: Table columns ['NonExistantColumn'] are not present"
+        expected_partial_error_message = f"argument -xc/-excluded_columns: Table columns ['NonExistantColumn'] " \
+                                         f"are not present"
         error_message = str(cm.exception)
         self.assertIn(expected_partial_error_message, error_message)
 
@@ -301,7 +306,7 @@ class TestArgParser(ut.TestCase):
         with self.assertRaises(ap.WrongArgumentError) as cm:
             ap.parse_args(test_args)
 
-        expected_partial_error_message = 'argument -xc/-ex_col: Can not use argument -xc without argument -c'
+        expected_partial_error_message = 'argument -xc/-excluded_columns: Can not use argument -xc without argument -c'
         error_message = str(cm.exception)
         self.assertIn(expected_partial_error_message, error_message)
 

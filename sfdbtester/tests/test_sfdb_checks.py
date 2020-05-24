@@ -71,9 +71,9 @@ class TestSFDBTests(ut.TestCase):
 
         faulty_lines = sc.check_for_duplicates(test_sfdb)
 
-        expected_output = [(np.array([1, 2], dtype='int32'), 'val4\tval5\tval6')]
+        expected_output = [(np.array([1, 2], dtype='int32'), np.array(['val4', 'val5', 'val6']))]
         np.testing.assert_array_equal(expected_output[0][0], faulty_lines[0][0])
-        self.assertEqual(expected_output[0][1], faulty_lines[0][1])
+        np.testing.assert_array_equal(expected_output[0][1], faulty_lines[0][1])
 
     def test_check_datatype_conformity_with_datatype_conformity(self):
         test_sfdb = create_test_sfdbcontainer()
@@ -122,35 +122,67 @@ class TestSFDBTests(ut.TestCase):
             self.assertEqual(expected_entry[3], entry[3])
             self.assertEqual(expected_entry[4], entry[4])
 
-    def test_check_content_against_regex_all_lines_match(self):
+    def test_check_content_against_regex_all_entries_match(self):
         test_sfdb = create_test_sfdbcontainer()
-        test_pattern = re.compile(r'val\d\tval\d')
+        test_column_patterns = {'COLUMN1': re.compile(r'val\d'),
+                                'COLUMN2': re.compile(r'val\d')}
 
-        matching_lines = sc.check_content_against_regex(test_sfdb, test_pattern)
+        matching_lines = sc.check_content_against_regex(test_sfdb, test_column_patterns)
 
         expected_output = []
         self.assertEqual(matching_lines, expected_output)
 
-    def test_check_content_against_regex_one_line_mismatch(self):
-        test_entries = [['val1', 'val2'], ['1', '2']]
+    def test_check_content_against_regex_1_value_mismatch(self):
+        test_entries = [['val1', 'val2'], ['val1', '2']]
         test_sfdb = create_test_sfdbcontainer(entries=test_entries)
-        test_pattern = re.compile(r'val\d\tval\d')
+        test_column_patterns = {'COLUMN1': re.compile(r'val\d'),
+                                'COLUMN2': re.compile(r'val\d')}
 
-        matching_lines = sc.check_content_against_regex(test_sfdb, test_pattern)
+        matching_lines = sc.check_content_against_regex(test_sfdb, test_column_patterns)
 
-        expected_output = [(1, '1\t2')]
-        self.assertEqual(expected_output, matching_lines)
+        expected_entry_index = 1
+        expected_column_string = " 2-COLUMN2"
+        expected_entry = np.array(test_entries[1])
+        expected_value = '2'
+        exected_regex = r'val\d'
 
-    def test_check_content_against_regex_all_lines_mismatch(self):
-        test_entries = [['nopat1', 'nopat2'], ['1', '2']]
+        self.assertEqual(expected_entry_index, matching_lines[0][0])
+        self.assertEqual(expected_column_string, matching_lines[0][1])
+        np.testing.assert_array_equal(expected_entry, matching_lines[0][2])
+        self.assertEqual(expected_value, matching_lines[0][3])
+        self.assertEqual(exected_regex, matching_lines[0][4])
+
+    def test_check_content_against_regex_2_value_mismatch(self):
+        test_entries = [['nopat1', 'nopat2'], ['val1', 'val2']]
         test_sfdb = create_test_sfdbcontainer(entries=test_entries)
-        test_pattern = re.compile(r'val\d\tval\d')
+        test_column_patterns = {'COLUMN1': re.compile(r'val\d'),
+                                'COLUMN2': re.compile(r'val\d')}
 
-        matching_lines = sc.check_content_against_regex(test_sfdb, test_pattern)
+        matching_lines = sc.check_content_against_regex(test_sfdb, test_column_patterns)
 
-        expected_output = [(0, 'nopat1\tnopat2'),
-                           (1, '1\t2')]
-        self.assertEqual(expected_output, matching_lines)
+        expected_entry_index1 = 0
+        expected_column_string1 = " 1-COLUMN1"
+        expected_entry1 = np.array(test_entries[0])
+        expected_value1 = 'nopat1'
+        exected_regex1 = r'val\d'
+
+        self.assertEqual(expected_entry_index1, matching_lines[0][0])
+        self.assertEqual(expected_column_string1, matching_lines[0][1])
+        np.testing.assert_array_equal(expected_entry1, matching_lines[0][2])
+        self.assertEqual(expected_value1, matching_lines[0][3])
+        self.assertEqual(exected_regex1, matching_lines[0][4])
+
+        expected_entry_index2 = 0
+        expected_column_string2 = " 2-COLUMN2"
+        expected_entry2 = np.array(test_entries[0])
+        expected_value2 = 'nopat2'
+        exected_regex2 = r'val\d'
+
+        self.assertEqual(expected_entry_index2, matching_lines[1][0])
+        self.assertEqual(expected_column_string2, matching_lines[1][1])
+        np.testing.assert_array_equal(expected_entry2, matching_lines[1][2])
+        self.assertEqual(expected_value2, matching_lines[1][3])
+        self.assertEqual(exected_regex2, matching_lines[1][4])
 
     def test_check_sfdb_comparison_identical_sfdb(self):
         sfdb1 = create_test_sfdbcontainer()
@@ -169,7 +201,8 @@ class TestSFDBTests(ut.TestCase):
 
         diverging_entries = sc.check_sfdb_comparison(sfdb1, sfdb2)
 
-        expected_output = [(1, np.array(['1', '2']), 1, np.array(['1', '3']))]
+        expected_output = [(1, np.array(['1', '2']),
+                            1, np.array(['1', '3']))]
         self.assertEqual(expected_output[0][0], diverging_entries[0][0])
         np.testing.assert_array_equal(expected_output[0][1], diverging_entries[0][1])
         self.assertEqual(expected_output[0][2], diverging_entries[0][2])

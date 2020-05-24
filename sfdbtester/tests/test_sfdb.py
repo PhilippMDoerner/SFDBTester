@@ -16,7 +16,7 @@ def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),
     if not num_values == len(columns):
         max_len = max(num_values, len(columns))
         columns = [f'COLUMN{i+1}' for i in range(max_len)] if len(columns) < max_len else columns
-        entries = [(f'val{i+1}', f'val{i+2}') for i in range (max_len)] if len(entries) < max_len else entries
+        entries = [(f'val{i+1}', f'val{i+2}') for i in range(max_len)] if len(entries) < max_len else entries
 
     columns = '\t'.join(columns)
     header = ['ENCODING UTF8',
@@ -26,12 +26,12 @@ def create_test_sfdbcontainer(name='SMALL_TEST', columns=('COLUMN1', 'COLUMN2'),
               f'INSERT']
     entries = ['\t'.join(entry) for entry in entries] if len(entries) > 1 else entries
 
-    sfdb = SFDBContainer(header + entries)
+    test_sfdb = SFDBContainer(header + entries)
 
     if schema is not None and isinstance(schema, SQLTableSchema):
-        sfdb.schema = schema
+        test_sfdb.schema = schema
 
-    return sfdb
+    return test_sfdb
 
 
 class TestSFDBContainer(ut.TestCase):
@@ -308,8 +308,8 @@ class TestSFDBContainer(ut.TestCase):
 
         output = test_sfdb.get_duplicates()
 
-        expected_output = [(np.array((0, 2, 4)), '1\t2'),
-                           (np.array((3, 5)), '5\t6')]
+        expected_output = [(np.array((0, 2, 4)), np.array(['1', '2'])),
+                           (np.array((3, 5)), np.array(['5', '6']))]
         np.testing.assert_array_equal(expected_output[0][0], output[0][0])
         np.testing.assert_array_equal(expected_output[0][1], output[0][1])
         np.testing.assert_array_equal(expected_output[1][0], output[1][0])
@@ -334,7 +334,7 @@ class TestSFDBContainer(ut.TestCase):
         test_entries2 = [['1', '3'], ['3', '4']]
         test_sfdb1 = create_test_sfdbcontainer(entries=test_entries1)
         test_sfdb2 = create_test_sfdbcontainer(entries=test_entries2)
-        self.assertFalse( test_sfdb1.__eq__(test_sfdb2))
+        self.assertFalse(test_sfdb1.__eq__(test_sfdb2))
 
     def test___eq__equal_sfdbs_differing_filepath(self):
         test_sfdb1 = create_test_sfdbcontainer()
@@ -356,14 +356,14 @@ class TestSFDBContainer(ut.TestCase):
     def test___hash__equal_sfdbs(self):
         test_sfdb1 = create_test_sfdbcontainer()
         test_sfdb2 = create_test_sfdbcontainer()
-        self.assertEquals(test_sfdb1.__hash__(), test_sfdb2.__hash__())
+        self.assertEqual(test_sfdb1.__hash__(), test_sfdb2.__hash__())
 
     def test___hash__unequal_sfdbs_differing_entries(self):
         test_entries1 = [['1', '2'], ['3', '4']]
         test_entries2 = [['1', '3'], ['3', '4']]
         test_sfdb1 = create_test_sfdbcontainer(entries=test_entries1)
         test_sfdb2 = create_test_sfdbcontainer(entries=test_entries2)
-        self.assertNotEqual( test_sfdb1.__hash__(), test_sfdb2.__hash__())
+        self.assertNotEqual(test_sfdb1.__hash__(), test_sfdb2.__hash__())
 
     def test___hash__equal_sfdbs_differing_filepath(self):
         test_sfdb1 = create_test_sfdbcontainer()

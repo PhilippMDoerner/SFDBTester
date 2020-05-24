@@ -256,7 +256,7 @@ class SFDBContainer:
         _, inverse_rows = np.unique(rows, return_index=True)
 
         res = np.split(cols, inverse_rows[1:])
-        duplicate_list = [(i, entry_to_line(self.content[i[0]])) for i in res]
+        duplicate_list = [(i, self.content[i[0]]) for i in res]
 
         return duplicate_list
 

@@ -10,6 +10,10 @@ from sfdbtester.common.sfdb_logging import LOGFILE_LEVEL, create_log_filepath, c
 
 
 def run():
+    if len(sys.argv) == 1:
+        ap._build_parser().print_help()
+        sys.exit(1)
+
     # Initialize logging
     sfdb_path = os.path.abspath(sys.argv[1])
     log_filepath = create_log_filepath(sfdb_path)
@@ -27,44 +31,44 @@ def run():
 
     # Perform Tests on SFDB file
     logging.log(LOGFILE_LEVEL, 'STARTING CONTENT FORMAT TEST')
-    wrong_format_entries = sc.check_content_format(args.SFDBFile)
-    sc.log_sfdb_content_format_check(len(args.SFDBFile.columns), wrong_format_entries)
+    wrong_format_entries = sc.check_content_format(args.sfdb_new)
+    sc.log_sfdb_content_format_check(len(args.sfdb_new.columns), wrong_format_entries)
     logging.log(LOGFILE_LEVEL, 'FINISHED CONTENT FORMAT TEST\n')
 
     # Run tests that crash if SFDB file has format issues
     if not wrong_format_entries:
         logging.log(LOGFILE_LEVEL, 'STARTING EXCEL AUTOFORMATTING TEST')
-        formatted_cells_list = sc.check_excel_autoformatting(args.SFDBFile)
+        formatted_cells_list = sc.check_excel_autoformatting(args.sfdb_new)
         sc.log_excel_autoformatting_check(formatted_cells_list)
         warning_counter += len(formatted_cells_list)
         logging.log(LOGFILE_LEVEL, 'FINISHED EXCEL AUTOFORMATTING TEST\n')
 
         logging.log(LOGFILE_LEVEL, 'STARTING DUPLICATE TEST')
-        duplicates = args.SFDBFile.get_duplicates()
+        duplicates = args.sfdb_new.get_duplicates()
         sc.log_duplicates_check(duplicates)
-        warning_counter += len(args.SFDBFile._get_duplicate_index_list())
+        warning_counter += len(args.sfdb_new._get_duplicate_index_list())
         logging.log(LOGFILE_LEVEL, 'FINISHED DUPLICATE TEST\n')
 
         logging.log(LOGFILE_LEVEL, 'STARTING DATATYPE TEST')
-        non_conform_entries = sc.check_datatype_conformity(args.SFDBFile)
+        non_conform_entries = sc.check_datatype_conformity(args.sfdb_new)
         sc.log_datatype_check(non_conform_entries)
         warning_counter += 0 if non_conform_entries is None else len(non_conform_entries)
         logging.log(LOGFILE_LEVEL, 'FINISHED  DATATYPE TEST\n')
 
-        if args.regular_expression:
+        if args.column_patterns:
             logging.log(LOGFILE_LEVEL, 'STARTING REGEX TEST')
-            non_regex_entries = sc.check_content_against_regex(args.SFDBFile, args.regular_expression)
-            sc.log_regex_check(non_regex_entries, args.regular_expression)
-            warning_counter += len(non_regex_entries)
+            non_compliant_entries = sc.check_content_against_regex(args.sfdb_new, args.column_patterns)
+            sc.log_regex_check(non_compliant_entries)
+            warning_counter += len(non_compliant_entries)
             logging.log(LOGFILE_LEVEL, 'FINISHED REGEX TEST\n')
 
-        if args.comparison_sfdb:
+        if args.sfdb_old:
             logging.log(LOGFILE_LEVEL, 'STARTING COMPARISON TEST')
-            diverging_entries = sc.check_sfdb_comparison(args.SFDBFile,
-                                                       args.comparison_sfdb,
-                                                       args.ex_lines1,
-                                                       args.ex_lines2,
-                                                       args.ex_col)
+            diverging_entries = sc.check_sfdb_comparison(args.sfdb_new,
+                                                         args.sfdb_old,
+                                                         args.excluded_lines1,
+                                                         args.excluded_lines2,
+                                                         args.excluded_columns)
             sc.log_sfdb_comparison(diverging_entries)
             warning_counter += len(diverging_entries)
             logging.log(LOGFILE_LEVEL, 'FINISHED COMPARISON TEST\n')
@@ -72,7 +76,7 @@ def run():
         if args.write:
             no_dupl_sfdb_file = args.SFDBFile[:-5] + '_no_duplicates.sfdb'
             logging.log(LOGFILE_LEVEL, 'Writing SFDB file without duplicates to {no_dupl_sfdb_file}')
-            args.SFDBFile.write(no_dupl_sfdb_file, sort=args.sorted, remove_duplicates=True)
+            args.sfdb_new.write(no_dupl_sfdb_file, sort=args.sorted, remove_duplicates=True)
 
     else:
         logging.info('Only format tests were carried out due to the format issues.\n'
@@ -83,6 +87,7 @@ def run():
     logging.info(f'The file caused {warning_counter} warning-messages.')
     logging.info(f'Logfile written to {log_filepath}.\nDone')
 
+# TODO: Adjust request mode for regex
 
 if __name__ == '__main__':
     run()

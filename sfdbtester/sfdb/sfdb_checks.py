@@ -143,43 +143,53 @@ def check_for_duplicates(sfdb):
     Parameters:
         sfdb (SFDBContainer): The SFDB file.
     Returns:
-        list (list(int), str) : List of entry-indices with identical entries and the entry itself. 
+        list (list(int), str) : List of entry-indices with identical entries and the entry itself.
             Entry-indices start from 0.
     """
     return sfdb.get_duplicates()
 
 
-def log_regex_check(non_regex_lines, regex_pattern):
+def log_regex_check(unmatched_lines):
     """Logs the result of a check whether an sfdb had a valid header
     Parameters:
-        non_regex_lines (list(int, string)): A list of lines that didn't match the regular expression in regex_pattern
-            and their indices in the file.
-        regex_pattern (Pattern): A re.Pattern object of the regular expression that was searched for.
+        unmatched_lines (list(int, str, np.ndarray, str, SRE_Pattern)): A list of entries with values that did not
+            comply with a provided regular_expression for their column. Contains The index of the entry, the column
+            with the non-compliant value, the entry itself, the non-compliant value and the regular-expression.
     Returns:
         Nothing
     """
-    if len(non_regex_lines) == 0:
+    if len(unmatched_lines) == 0:
         logging.log(LOGFILE_LEVEL, '    No issues.')
         return
 
-    logging.log(LOGFILE_LEVEL, f'    Regex: \"{str(regex_pattern)[12:-2]}\":')
+    column1 = f'{"Line":>12}'
+    column2 = f'{"Column_index - Column":<22}'
+    column3 = f'{"Regular Expression"}'
+    column4 = f'{"Faulty Value":<20}'
+    column5 = 'Entry'
+    logging.log(LOGFILE_LEVEL, f' {column1} | {column2} | {column3} | {column4} | {column5}')
 
-    column1 = f'{"Line":<12}'
-    column2 = 'Entry'
-    logging.log(LOGFILE_LEVEL, f' {column1} | {column2}')
+    for entry_index, column, entry, value, regex in unmatched_lines:
+        line_index = f'{entry_index + INDEX_SHIFT:>{len(column1)}}'
+        column = f'{column:<{len(column2)}}'
+        regex = f"\'{regex}\'"
+        regex = f'{regex:<{len(column3)}}'
+        value = f"\'{value}\'"
+        value = f'{value:<{len(column4)}}'
+        line = entry_to_line(entry)
+        logging.log(LOGFILE_LEVEL, f' {line_index} | {column} | {regex} | {value} | \'{line}\'')
 
-    for i, line in non_regex_lines:
-        line_index = f'{i + INDEX_SHIFT:>{len(column1)}}'
-        logging.log(LOGFILE_LEVEL, f' {line_index} | \'{line}\'')
+# TODO: Add flag that allows inversing of regex search. By default logs all entries that DON'T comply with regex
 
 
-def check_content_against_regex(sfdb, regex_pattern):
+def check_content_against_regex(sfdb, column_patterns):
     """Checks whether an SFDB file has lines without values that match a regular
     expression. Excludes the SFDB header lines from the search.
 
     Parameters:
         sfdb (SFDBContainer): The SFDB file.
-        regex_pattern (Pattern): The regular expression.
+        column_patterns (dict(str: SRE_Pattern): A dictionary mapping columns to regular expression patterns that their
+            values should comply with.
     Returns:
         list: A list of tuples(i (int), line (list)).
                 i: Index of line that did not match regular expression.
@@ -187,14 +197,19 @@ def check_content_against_regex(sfdb, regex_pattern):
                     regular expression
         None: If regular expression pattern object is "None".
     """
+    column_indices = [(sfdb.columns.index(col), col) for col in column_patterns]
+    unmatched_entries = []
 
-    if regex_pattern is None:
-        lines_without_regex = None
-    else:
-        sfdb_lines = sfdb.sfdb_lines[5:]
-        lines_without_regex = [(i, line) for i, line in enumerate(sfdb_lines)
-                               if not regex_pattern.search(str(line))]
-    return lines_without_regex
+    for entry_index, entry in enumerate(sfdb.content):
+        for i, column_name in column_indices:
+            pattern = column_patterns[column_name]
+
+            if not pattern.search(entry[i]):
+                column_string = f'{i + 1:>2}-{column_name}'
+                regex = pattern.pattern
+                unmatched_entries.append((entry_index, column_string, entry, entry[i], regex))
+
+    return unmatched_entries
 
 
 def log_datatype_check(non_conform_entries):
@@ -320,7 +335,7 @@ def check_sfdb_comparison(sfdb_new, sfdb_old, excluded_lines_new=(), excluded_li
     """Checks whether the lines of 2 SFDB files are identical after
     exclusion of added/deleted lines and columns.
 
-    Excluded lines and columns are specified via user-input. 
+    Excluded lines and columns are specified via user-input.
 
     Parameters:
         sfdb_new (SFDBContainer): The updated version of an SFDB file.
